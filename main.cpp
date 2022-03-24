@@ -13,6 +13,15 @@
 #define RET_UNKNOWN_PHY -3
 #define RET_ERROR -3
 
+#define AR803x_PHY_ID_1			0x4d
+#define AR803x_PHY_DEBUG_ADDR_REG	0x1d
+#define AR803x_PHY_DEBUG_DATA_REG	0x1e
+
+#define ADIN1300_PHY_ID_1		0x283
+#define ADIN1300_EXT_REG_PTR		0x10
+#define ADIN1300_EXT_REG_DATA		0x11
+#define ADIN1300_GE_RGMII_CFG		0xff23
+
 void usage() {
     printf("Usage:\n\n./var-mii <interface> <address> <register> <value>\n\n");
     printf("  interface: eth0, eth1, etc.\n");
@@ -93,6 +102,26 @@ int mii_write_reg(const char * if_name, const int phy_addr, const int phy_reg, c
     return ret;
 }
 
+int adin1300_read_extended(const char * if_name, const int phy_addr, const int phy_reg, __u16 * value) {
+    mii_write_reg(if_name, phy_addr, ADIN1300_EXT_REG_PTR, phy_reg);
+    return mii_read_reg(if_name, phy_addr, ADIN1300_EXT_REG_DATA, value);
+}
+
+int adin1300_write_extended(const char * if_name, const int phy_addr, const int phy_reg, __u16 value) {
+    mii_write_reg(if_name, phy_addr, ADIN1300_EXT_REG_PTR, phy_reg);
+    return mii_write_reg(if_name, phy_addr, ADIN1300_EXT_REG_DATA, value);
+}
+
+int ar803x_read_extended(const char * if_name, const int phy_addr, const int phy_reg, __u16 * value) {
+    mii_write_reg(if_name, phy_addr, AR803x_PHY_DEBUG_ADDR_REG, phy_reg);
+    return mii_read_reg(if_name, phy_addr, AR803x_PHY_DEBUG_DATA_REG, value);
+}
+
+int ar803x_write_extended(const char * if_name, const int phy_addr, const int phy_reg, __u16 value) {
+    mii_write_reg(if_name, phy_addr, AR803x_PHY_DEBUG_ADDR_REG, phy_reg);
+    return mii_write_reg(if_name, phy_addr, AR803x_PHY_DEBUG_DATA_REG, value);
+}
+
 int var_verify_adin1300() {
     return 0;
 }
@@ -144,11 +173,11 @@ int main(int argc, char *argv[])
         return RET_IO_ERR;
 
     switch(phy_val) {
-        case 0x283:
+        case ADIN1300_PHY_ID_1:
             printf("PHY@%d: ADIN1300\n", phy_addr);
             var_verify_adin1300();
             break;
-        case 0x4d:
+        case AR803x_PHY_ID_1:
             printf("PHY@%d: AR8033\n", phy_addr);
             var_verify_ar803x();
             break;
