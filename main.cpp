@@ -172,7 +172,6 @@ int verify_ar803x(const char * if_name, const int phy_addr) {
 
 int main(int argc, char *argv[])
 {
-    struct ifreq ifr;
     const char * if_name;
     int phy_addr, phy_reg = -1;
     __u16 phy_val = 0xffff;
