@@ -221,6 +221,10 @@ int main(int argc, char *argv[])
             printf("PHY@%d: AR8033\n", phy_addr);
             verify_ar803x(if_name, phy_addr);
             break;
+        default:
+            printf("PHY@%d: Unknown ID: 0x%x\n", phy_addr, phy_val);
+            return RET_UNKNOWN_PHY;
+            break;
     }
 
     return 0;
