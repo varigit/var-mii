@@ -7,20 +7,22 @@
 #include <linux/mii.h>
 #include <linux/sockios.h>
 
-#define DEBUG 0
+#define DEBUG 1
 #define RET_BAD_ARGS -1
 #define RET_IO_ERR -2
 #define RET_UNKNOWN_PHY -3
 #define RET_ERROR -3
 
-#define AR803x_PHY_ID_1			0x4d
-#define AR803x_PHY_DEBUG_ADDR_REG	0x1d
-#define AR803x_PHY_DEBUG_DATA_REG	0x1e
+#define AR803x_PHY_ID_1             0x4d
+#define AR803x_PHY_DEBUG_ADDR_REG   0x1d
+#define AR803x_PHY_DEBUG_DATA_REG   0x1e
+#define AR803x_DEBUG_REG_0          0x00
+#define AR803x_DEBUG_REG_31         0x1f
 
-#define ADIN1300_PHY_ID_1		0x283
-#define ADIN1300_EXT_REG_PTR		0x10
-#define ADIN1300_EXT_REG_DATA		0x11
-#define ADIN1300_GE_RGMII_CFG		0xff23
+#define ADIN1300_PHY_ID_1           0x283
+#define ADIN1300_EXT_REG_PTR        0x10
+#define ADIN1300_EXT_REG_DATA       0x11
+#define ADIN1300_GE_RGMII_CFG       0xff23
 
 void usage() {
     printf("Usage:\n\n./var-mii <interface> <address> <register> <value>\n\n");
@@ -122,12 +124,50 @@ int ar803x_write_extended(const char * if_name, const int phy_addr, const int ph
     return mii_write_reg(if_name, phy_addr, AR803x_PHY_DEBUG_DATA_REG, value);
 }
 
-int var_verify_adin1300() {
-    return 0;
+int verify_adin1300(const char * if_name, const int phy_addr) {
+    __u16 value;
+    int ret = 0;
+
+    adin1300_read_extended(if_name, phy_addr, 0xFF23, &value);
+    if(value & (1 << 1)) {
+        printf("%s: Error: GE_RGMII_TX_ID_EN is enabled\n");
+        ret = -1;
+    }
+    if(value & (1 << 2)) {
+        printf("%s: Error: GE_RGMII_RX_ID_EN is enabled\n");
+        ret = -1;
+    }
+
+    if(ret)
+        printf("%s: failed\n", __func__);
+    else
+        printf("%s: passed\n", __func__);
+
+    return ret;
 }
 
-int var_verify_ar803x() {
-    return 0;
+int verify_ar803x(const char * if_name, const int phy_addr) {
+    __u16 value;
+    int ret = 0;
+
+    ar803x_read_extended(if_name, phy_addr, AR803x_DEBUG_REG_0, &value);
+    if(value & (1 << 15)) {
+        printf("%s: Error: SEL_CLK125M_DSP set, rx delay is enabled\n");
+        ret = -1;
+    }
+
+    ar803x_read_extended(if_name, phy_addr, AR803x_DEBUG_REG_31, &value);
+    if(!(value & (1 << 3))) {
+        printf("%s: Error: SEL_1P5_1P8_POS_REG not set, voltage is 1.5v\n");
+        ret = -1;
+    }
+
+    if(ret)
+        printf("%s: failed\n", __func__);
+    else
+        printf("%s: passed\n", __func__);
+
+    return ret;
 }
 
 int main(int argc, char *argv[])
@@ -175,11 +215,11 @@ int main(int argc, char *argv[])
     switch(phy_val) {
         case ADIN1300_PHY_ID_1:
             printf("PHY@%d: ADIN1300\n", phy_addr);
-            var_verify_adin1300();
+            verify_adin1300(if_name, phy_addr);
             break;
         case AR803x_PHY_ID_1:
             printf("PHY@%d: AR8033\n", phy_addr);
-            var_verify_ar803x();
+            verify_ar803x(if_name, phy_addr);
             break;
     }
 
