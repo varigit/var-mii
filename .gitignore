@@ -1,3 +1,4 @@
 var-mii
 *.bin
 core
+*.o
