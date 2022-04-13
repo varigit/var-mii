@@ -70,6 +70,16 @@ machine_phyconfig_t machine_config_imx8mm = {
 	},
 };
 
+machine_phyconfig_t machine_config_imx8mn = {
+	.phy_count = 1,
+	.phy_configs = {
+		/* symphony */
+		{ .phy = { .if_name = "eth0", .addr = 4, .id = ADIN1300_PHY_ID_1, .mode = "rgmii" }},
+		{ .phy = { .if_name = "eth0", .addr = 4, .id = AR803x_PHY_ID_1,   .mode = "rgmii" }, .ar803_vddio = AT803X_VDDIO_1P8V },
+		/* last entry */
+		{ .phy = { .if_name = NULL }},
+	},
+};
 
 static void usage() {
 	printf("Usage:\n\n./var-mii <interface> <address> <register> <value>\n\n");
@@ -111,6 +121,9 @@ static machine_phyconfig_t * get_machine_phyconfig() {
 		machine_phyconfig = &machine_config_imx8mp;
 	} else if (strstr(machine, "DART-MX8M-MINI") || strstr(machine, "VAR-SOM-MX8M-MINI")) {
 		machine_phyconfig = &machine_config_imx8mm;
+	/* Old releases such as sumo have the machine name as VAR-SOM-MX8MN */
+	} else if (strstr(machine, "VAR-SOM-MX8M-NANO") || strstr(machine, "VAR-SOM-MX8MN")) {
+		machine_phyconfig = &machine_config_imx8mn;
 	} else {
 		printf("%s:\t\tFAIL: Could not find config for machine '%s'\n", __func__, machine);
 	}
