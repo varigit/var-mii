@@ -82,6 +82,14 @@ machine_phyconfig_t machine_config_imx8mn = {
 	},
 };
 
+machine_phyconfig_t machine_config_imx6dl = {
+	.phy_count = 1,
+	.phy_configs = {
+		{ .phy = { .if_name = "eth0", .addr = 7, .id = ADIN1300_PHY_ID_1, .mode = "rgmii-id" }, .clk_rcvr_125_en = ADIN1300_GE_CLK_RCVR_125_EN },
+		{ .phy = { .if_name = NULL }},
+	},
+};
+
 static void usage() {
 	printf("Usage:\n\n./var-mii <interface> <address> <register> <value>\n\n");
 	printf("  interface: eth0, eth1, etc.\n");
@@ -125,6 +133,8 @@ static machine_phyconfig_t * get_machine_phyconfig() {
 	/* Old releases such as sumo have the machine name as VAR-SOM-MX8MN */
 	} else if (strstr(machine, "VAR-SOM-MX8M-NANO") || strstr(machine, "VAR-SOM-MX8MN")) {
 		machine_phyconfig = &machine_config_imx8mn;
+	} else if (strstr(machine, "Variscite i.MX6 DL/Solo")) {
+		machine_phyconfig = &machine_config_imx6dl;
 	} else {
 		printf("%s:\t\tFAIL: Could not find config for machine '%s'\n", __func__, machine);
 	}
