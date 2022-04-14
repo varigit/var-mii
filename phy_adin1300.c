@@ -76,3 +76,24 @@ int adin1300_verify_phy_mode(const phy_t * phy, const char * mode) {
 
 	return ret;
 }
+
+int adin1300_verify_clk_rcvr_125(const phy_t * phy, const int clk_rcvr_125_en) {
+	__u16 value;
+	int ret;
+
+	/* read clock config regsiter */
+	adin1300_read_extended(phy, ADIN1300_GE_CLK_CFG, &value);
+
+	/* verify clk_rcvr_125_en bit */
+	if (clk_rcvr_125_en == (value & ADIN1300_GE_CLK_RCVR_125_EN)) {
+		printf("%s:\tPASS: Clock Config clk_rcvr_125_en = '0x%x' \n",
+		       __func__, clk_rcvr_125_en);
+		ret = 0;
+	} else {
+		printf("%s:\tFAIL: Clock Config clk_rcvr_125_en = '0x%lx', expected '0x%x' \n",
+		       __func__, value & ADIN1300_GE_CLK_RCVR_125_EN, clk_rcvr_125_en);
+		ret = -1;
+	}
+
+	return ret;
+}

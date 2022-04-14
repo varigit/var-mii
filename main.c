@@ -28,9 +28,10 @@ static char soc_machine[MACHINE_LEN];
 
 typedef struct {
 	phy_t phy;
-	uint8_t adin1300_rx_delay;      /* relevant only for rgmii-id, rgmii-rxid */
-	uint8_t adin1300_tx_delay;      /* relevant only for rgmii-id, rgmii-txid */
-	uint8_t ar803_vddio;            /* 1v5 or 1v8, default = 1v5 */
+	uint8_t adin1300_rx_delay;          /* relevant only for rgmii-id, rgmii-rxid */
+	uint8_t adin1300_tx_delay;          /* relevant only for rgmii-id, rgmii-txid */
+	uint8_t clk_rcvr_125_en;            /* default = 0 = disabled */
+	uint8_t ar803_vddio;                /* 1v5 or 1v8, default = 0 = 1v5 */
 } phyconfig_t;
 
 typedef struct {
@@ -158,6 +159,9 @@ static int var_verify_phys() {
 			case ADIN1300_PHY_ID_1:
 				printf("%s:\t\tPHY@%d: ADIN1300\n", __func__, phy_config.phy.addr);
 				if (adin1300_verify_phy_mode(&phy_config.phy, phy_config.phy.mode)) {
+					continue;
+				}
+				if (adin1300_verify_clk_rcvr_125(&phy_config.phy, phy_config.clk_rcvr_125_en)) {
 					continue;
 				}
 				verified_phys++;
