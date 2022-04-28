@@ -9,6 +9,7 @@
 #include "phylib.h"
 #include "phy_adin1300.h"
 #include "phy_ar803x.h"
+#include "phy_ksz9031.h"
 
 #define RET_BAD_ARGS -1
 #define RET_IO_ERR -2
@@ -86,6 +87,7 @@ machine_phyconfig_t machine_config_imx6dl = {
 	.phy_count = 1,
 	.phy_configs = {
 		{ .phy = { .if_name = "eth0", .addr = 7, .id = ADIN1300_PHY_ID_1, .mode = "rgmii-id" }, .clk_rcvr_125_en = ADIN1300_GE_CLK_RCVR_125_EN },
+		{ .phy = { .if_name = "eth0", .addr = 7, .id = KSZ9031_PHY_ID_1, .mode = "rgmii" }},
 		{ .phy = { .if_name = NULL }},
 	},
 };
@@ -200,6 +202,11 @@ static int var_verify_phys() {
 				if (ar803x_verify_vddio(&phy_config.phy, phy_config.ar803_vddio)) {
 					continue;
 				}
+				verified_phys++;
+				break;
+			case KSZ9031_PHY_ID_1:
+				printf("%s:\t\tPHY@%d: KSZ9031\n", __func__, phy_config.phy.addr);
+				/* For now, don't do any verification for KSZ9031, just acknowledge it was found */
 				verified_phys++;
 				break;
 			default:
