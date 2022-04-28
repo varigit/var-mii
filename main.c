@@ -146,7 +146,8 @@ static machine_phyconfig_t * get_machine_phyconfig() {
 	/* Old releases such as sumo have the machine name as VAR-SOM-MX8MN */
 	} else if (strstr(machine, "VAR-SOM-MX8M-NANO") || strstr(machine, "VAR-SOM-MX8MN")) {
 		machine_phyconfig = &machine_config_imx8mn;
-	} else if (strstr(machine, "Variscite i.MX6 DL/Solo")) {
+	} else if (strstr(machine, "Variscite i.MX6 DL/Solo") ||
+	          (strstr(machine, "Variscite i.MX6 DualLite/Solo VAR-SOM-DUAL/VAR-SOM-SOLO"))) {
 		machine_phyconfig = &machine_config_imx6dl;
 	} else if (strstr(machine, "Variscite i.MX7")) {
 		machine_phyconfig = &machine_config_imx7;
