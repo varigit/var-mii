@@ -105,6 +105,19 @@ machine_phyconfig_t machine_config_imx7 = {
 	},
 };
 
+machine_phyconfig_t machine_config_imx8qx = {
+	.phy_count = 2,
+	.phy_configs = {
+		/* symphony */
+		{ .phy = { .if_name = "eth0", .addr = 4, .id = ADIN1300_PHY_ID_1, .mode = "rgmii" }},
+		{ .phy = { .if_name = "eth1", .addr = 5, .id = ADIN1300_PHY_ID_1, .mode = "rgmii-rxid" }},
+		{ .phy = { .if_name = "eth0", .addr = 4, .id = AR803x_PHY_ID_1,   .mode = "rgmii" }, .ar803_vddio = AT803X_VDDIO_1P8V },
+		{ .phy = { .if_name = "eth1", .addr = 5, .id = AR803x_PHY_ID_1,   .mode = "rgmii-rxid" }, .ar803_vddio = AT803X_VDDIO_1P8V },
+		/* last entry */
+		{ .phy = { .if_name = NULL }},
+	},
+};
+
 static void usage() {
 	printf("Usage:\n\n./var-mii <interface> <address> <register> <value>\n\n");
 	printf("  interface: eth0, eth1, etc.\n");
@@ -153,6 +166,8 @@ static machine_phyconfig_t * get_machine_phyconfig() {
 		machine_phyconfig = &machine_config_imx6dl;
 	} else if (strstr(machine, "Variscite i.MX7")) {
 		machine_phyconfig = &machine_config_imx7;
+	} else if (strstr(machine, "VAR-SOM-MX8X")) {
+		machine_phyconfig = &machine_config_imx8qx;
 	} else {
 		printf("%s:\t\tFAIL: Could not find config for machine '%s'\n", __func__, machine);
 	}
