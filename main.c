@@ -128,7 +128,7 @@ machine_phyconfig_t machine_config_imx8qm = {
 		{ .phy = { .if_name = "eth1", .addr = 1, .id = AR803x_PHY_ID_1,   .mode = "rgmii" }, .ar803_vddio = AT803X_VDDIO_1P8V },
 		/* symphony */
 		{ .phy = { .if_name = "eth0", .addr = 4, .id = ADIN1300_PHY_ID_1, .mode = "rgmii" }},
-		{ .phy = { .if_name = "eth1", .addr = 5, .id = ADIN1300_PHY_ID_1, .mode = "rgmii-rxid" }},
+		{ .phy = { .if_name = "eth1", .addr = 5, .id = ADIN1300_PHY_ID_1, .mode = "rgmii" }},
 		{ .phy = { .if_name = "eth0", .addr = 4, .id = AR803x_PHY_ID_1,   .mode = "rgmii" }, .ar803_vddio = AT803X_VDDIO_1P8V },
 		{ .phy = { .if_name = "eth1", .addr = 5, .id = AR803x_PHY_ID_1,   .mode = "rgmii-rxid" }, .ar803_vddio = AT803X_VDDIO_1P8V },
 		/* last entry */
