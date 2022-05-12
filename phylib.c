@@ -7,9 +7,12 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include "phylib.h"
+#include "phylib_uart.h"
 
-int mii_read_reg(const phy_t * phy, const int phy_reg, __u16 * value) {
+static int _mii_read_reg(const phy_t * phy, const int phy_reg, __u16 * value) {
 	struct ifreq ifr;
 	int ret = 0;
 
@@ -43,7 +46,7 @@ int mii_read_reg(const phy_t * phy, const int phy_reg, __u16 * value) {
 	return ret;
 }
 
-int mii_write_reg(const phy_t * phy, const int phy_reg, const __u16 phy_val) {
+static int _mii_write_reg(const phy_t * phy, const int phy_reg, const __u16 phy_val) {
 	struct ifreq ifr;
 	int ret = 0;
 
@@ -74,4 +77,36 @@ int mii_write_reg(const phy_t * phy, const int phy_reg, const __u16 phy_val) {
 	}
 
 	return ret;
+}
+
+static int _mii_read_reg_uboot(const phy_t * phy, const int phy_reg, __u16 * value) {
+	char tx_buf[PHYLIB_BUF_SIZE], rx_buf[PHYLIB_BUF_SIZE];
+	snprintf(tx_buf, PHYLIB_BUF_SIZE, "mii read %x %x\r\n", phy->addr, phy_reg);
+	serial_write_read_str(tx_buf, rx_buf, PHYLIB_BUF_SIZE);
+
+	*value = (__u16) strtol(rx_buf, NULL, 16);
+	// printf("%s@%d: %d = 0x%x (%s)\n", __func__, phy->addr, phy_reg, *value, rx_buf);
+	return 0;
+}
+
+static int _mii_write_reg_uboot(const phy_t * phy, const int phy_reg, const __u16 phy_val) {
+	char tx_buf[PHYLIB_BUF_SIZE];
+
+	snprintf(tx_buf, PHYLIB_BUF_SIZE, "mii write %x %x %x\r\n", phy->addr, phy_reg, phy_val);
+	return serial_write_str(tx_buf);
+}
+
+int mii_read_reg(const phy_t * phy, const int phy_reg, __u16 * value) {
+	if (serial_active())
+		return _mii_read_reg_uboot(phy, phy_reg, value);
+	else
+		return _mii_read_reg(phy, phy_reg, value);
+}
+
+int mii_write_reg(const phy_t * phy, const int phy_reg, const __u16 phy_val) {
+	if (serial_active())
+		return _mii_write_reg_uboot(phy, phy_reg, phy_val);
+	else
+		return _mii_write_reg(phy, phy_reg, phy_val);
+
 }

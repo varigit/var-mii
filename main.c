@@ -6,7 +6,9 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <termios.h>
 #include "phylib.h"
+#include "phylib_uart.h"
 #include "phy_adin1300.h"
 #include "phy_ar803x.h"
 #include "phy_ksz9031.h"
@@ -16,9 +18,6 @@
 #define RET_UNKNOWN_PHY -3
 #define RET_ERROR -3
 
-
-#define MACHINE_LEN 100
-static char soc_machine[MACHINE_LEN];
 
 #if defined(DEBUG) && DEBUG > 0
  #define DEBUG_PRINT(fmt, args...) fprintf(stderr, "DEBUG: %s:%d:%s(): " fmt, \
@@ -137,37 +136,52 @@ machine_phyconfig_t machine_config_imx8qm = {
 };
 
 static void usage() {
-	printf("Usage:\n\n./var-mii <interface> <address> <register> <value>\n\n");
-	printf("  interface: eth0, eth1, etc.\n");
-	printf("  address: Phy Address\n");
-	printf("  register: Optional argument to skip test and instead read a register\n");
-	printf("  value: Optional argument to skip test and instead write a register\n");
-	printf("\nExamples:\n\n");
-	printf("SOM:\t\t\t./var-mii eth0 0x04 0x2\n");
-	printf("Symphony:\t\t./var-mii eth1 0x05 0x2\n");
-	printf("DART:\t\t\t./var-mii eth0 0x0 0x2\n");
-	printf("DT8MCusbomboard:\t./var-mii eth1 0x1 0x2\n");
-	printf("SPEAR:\t\t\t./var-mii eth0 0x0 0x2\n");
-	printf("SP8Cusbomboard:\t./var-mii eth1 0x1 0x2\n");
+	printf("Usage:\n");
+	printf("  var-mii supports multiple functions:\n");
+	printf("  1) Run an automated test on the target, while the target is running Linux:\n");
+	printf("    # ./var-mii\n");
+	printf("  2) Run an automated test from a host, while the target is running U-Boot:\n");
+	printf("    $ ./var-mii <console tty device>\n");
+	printf("  3) Read/Write mii registers on the target, while the target is running Linux:\n");
+	printf("    # ./var-mii <interface> <address> <register> <value>\n");
+	printf("          interface: eth0, eth1, etc.\n");
+	printf("          address: Phy Address\n");
+	printf("          register: Optional argument to skip test and instead read a register\n");
+	printf("          value: Optional argument to skip test and instead write a register\n\n");
+	printf("    Examples:\n\n");
+	printf("          SOM:\t\t\t./var-mii eth0 0x04 0x2\n");
+	printf("          Symphony:\t\t./var-mii eth1 0x05 0x2\n");
+	printf("          DART:\t\t\t./var-mii eth0 0x0 0x2\n");
+	printf("          DT8MCusbomboard:\t./var-mii eth1 0x1 0x2\n");
+	printf("          SPEAR:\t\t\t./var-mii eth0 0x0 0x2\n");
+	printf("          SP8Cusbomboard:\t./var-mii eth1 0x1 0x2\n");
 }
 
+#define MACHINE_LEN 100
 static char * get_soc_machine() {
-	FILE *f;
+	static char soc_machine[MACHINE_LEN];
 	char * ret;
 
-	f=fopen("/sys/devices/soc0/machine","r");
-	ret = fgets(soc_machine, MACHINE_LEN, f);
+	snprintf(soc_machine, MACHINE_LEN, "Unknown");
 
-	if (!ret) {
-		printf("%s: failed to read /sys/devices/soc0/machine\n", __func__);
-	return ret;
+	if (serial_active()) {
+		serial_write_read_str("echo $board_name\r\n", soc_machine, MACHINE_LEN);
+	} else {
+		FILE *f;
+
+		f=fopen("/sys/devices/soc0/machine","r");
+		ret = fgets(soc_machine, MACHINE_LEN, f);
+
+		if (!ret) {
+			printf("%s: failed to read /sys/devices/soc0/machine\n", __func__);
+		}
+
+		fclose(f);
 	}
-
-	fclose(f);
 
 	printf("%s:\t\t%s\n", __func__, soc_machine);
 
-	return ret;
+	return soc_machine;
 }
 
 static machine_phyconfig_t * get_machine_phyconfig() {
@@ -269,21 +283,25 @@ int main(int argc, char *argv[])
 	__u16 phy_val = 0xffff;
 
 	/* parse args */
-	if (argc == 3) {
-		phy.if_name = argv[1];
-		phy.addr = strtol(argv[2], NULL, 0);
-	} else if (argc == 4) {
+	if (argc == 4) {
+		/* read */
 		phy.if_name = argv[1];
 		phy.addr = strtol(argv[2], NULL, 0);
 		phy_reg = strtol(argv[3], NULL, 0);
 	} else if (argc == 5) {
+		/* write */
 		phy.if_name = argv[1];
 		phy.addr = strtol(argv[2], NULL, 0);
 		phy_reg = strtol(argv[3], NULL, 0);
 		phy_val = strtol(argv[4], NULL, 0);
 	} else if (argc == 2) {
-		usage();
-		return RET_BAD_ARGS;
+		/* U-Boot or Linux automated test */
+		if (!strstr(argv[1], "/dev/tty")) {
+			usage();
+			return RET_BAD_ARGS;
+		} else {
+			serial_open(argv[1], B115200, 1);
+		}
 	}
 
 	/* If value arg passed, write this register */
@@ -306,6 +324,9 @@ int main(int argc, char *argv[])
 	} else {
 		printf("Results: Success\n");
 	}
+
+	if (serial_active())
+		serial_close();
 
 	return 0;
 }
