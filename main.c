@@ -82,6 +82,17 @@ machine_phyconfig_t machine_config_imx8mn = {
 	},
 };
 
+machine_phyconfig_t machine_config_imx8mq = {
+	.phy_count = 1,
+	.phy_configs = {
+		/* dt8mcustomboard */
+		{ .phy = { .if_name = "eth0", .addr = 0, .id = ADIN1300_PHY_ID_1, .mode = "rgmii" }},
+		{ .phy = { .if_name = "eth0", .addr = 0, .id = AR803x_PHY_ID_1,   .mode = "rgmii" }, .ar803_vddio = AT803X_VDDIO_1P8V },
+		/* last entry */
+		{ .phy = { .if_name = NULL }},
+	},
+};
+
 machine_phyconfig_t machine_config_imx6dl = {
 	.phy_count = 1,
 	.phy_configs = {
@@ -184,10 +195,47 @@ static char * get_soc_machine() {
 	return soc_machine;
 }
 
+static char * get_soc() {
+	static char soc_name[MACHINE_LEN];
+	char * ret;
+
+	snprintf(soc_name, MACHINE_LEN, "Unknown");
+
+	if (serial_active()) {
+		serial_write_read_str("echo $soc_type\r\n", soc_name, MACHINE_LEN);
+	} else {
+		FILE *f;
+
+		f=fopen("/sys/devices/soc0/soc_id","r");
+		ret = fgets(soc_name, MACHINE_LEN, f);
+
+		if (!ret) {
+			printf("%s: failed to read /sys/devices/soc0/soc_id\n", __func__);
+		}
+
+		fclose(f);
+	}
+
+	printf("%s:\t\t\t%s\n", __func__, soc_name);
+
+	return soc_name;
+}
+
 static machine_phyconfig_t * get_machine_phyconfig() {
 	char * machine = get_soc_machine();
+	char * soc = get_soc();
 	machine_phyconfig_t * machine_phyconfig = NULL;
 
+	/* Select phy configuration based on SoC name */
+	if (strstr(soc, "i.MX8MQ") || strstr(soc, "imx8mq")) {
+		machine_phyconfig = &machine_config_imx8mq;
+	}
+
+	if (machine_phyconfig != NULL)
+		return machine_phyconfig;
+
+	/* Select phy configuration based on machine name
+	   Todo: Migrate to use soc_id, which is more consistant then machine name */
 	if (strstr(machine, "DART-MX8M-PLUS") || strstr(machine, "VAR-SOM-MX8M-PLUS")) {
 		machine_phyconfig = &machine_config_imx8mp;
 	} else if (strstr(machine, "DART-MX8M-MINI") || strstr(machine, "VAR-SOM-MX8M-MINI")) {
