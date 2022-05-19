@@ -76,6 +76,10 @@ int ar803x_verify_vddio(const phy_t * phy, const __u16 vddio) {
 	__u16 value;
 	int ret = 0;
 
+	// Don't care, return
+	if (vddio == AT803X_VDDIO_DONTCARE)
+		return 0;
+
 	/* read vddio regsiter */
 	ar803x_read_extended(phy, AR803x_DEBUG_REG_31, &value);
 
