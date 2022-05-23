@@ -13,7 +13,6 @@
 #include "phy_ar803x.h"
 #include "phy_ksz9031.h"
 
-#define RET_BAD_ARGS -1
 #define RET_IO_ERR -2
 #define RET_UNKNOWN_PHY -3
 #define RET_ERROR -3
@@ -146,26 +145,30 @@ machine_phyconfig_t machine_config_imx8qm = {
 	},
 };
 
-static void usage() {
+static void usage(const char * err) {
+	if (err)
+		printf("Error: %s\n", err);
+
 	printf("Usage:\n");
 	printf("  var-mii supports multiple functions:\n");
 	printf("  1) Run an automated test on the target, while the target is running Linux:\n");
 	printf("    # ./var-mii\n");
 	printf("  2) Run an automated test from a host, while the target is running U-Boot:\n");
-	printf("    $ ./var-mii <console tty device>\n");
+	printf("    $ ./var-mii -d <console tty device>\n");
 	printf("  3) Read/Write mii registers on the target, while the target is running Linux:\n");
-	printf("    # ./var-mii <interface> <address> <register> <value>\n");
+	printf("    # ./var-mii -i <interface> -a <address> -r <register> -v <value>\n");
 	printf("          interface: eth0, eth1, etc.\n");
 	printf("          address: Phy Address\n");
 	printf("          register: Optional argument to skip test and instead read a register\n");
 	printf("          value: Optional argument to skip test and instead write a register\n\n");
 	printf("    Examples:\n\n");
-	printf("          SOM:\t\t\t./var-mii eth0 0x04 0x2\n");
-	printf("          Symphony:\t\t./var-mii eth1 0x05 0x2\n");
-	printf("          DART:\t\t\t./var-mii eth0 0x0 0x2\n");
-	printf("          DT8MCusbomboard:\t./var-mii eth1 0x1 0x2\n");
-	printf("          SPEAR:\t\t\t./var-mii eth0 0x0 0x2\n");
-	printf("          SP8Cusbomboard:\t./var-mii eth1 0x1 0x2\n");
+	printf("          SOM:\t\t\t./var-mii -i eth0 -a 0x04 -r 0x2\n");
+	printf("          Symphony:\t\t./var-mii -i eth1 -a 0x05 -r 0x2\n");
+	printf("          DART:\t\t\t./var-mii -i eth0 -a 0x0  -r 0x2\n");
+	printf("          DT8MCusbomboard:\t./var-mii -i eth1 -a 0x1  -r 0x2\n");
+	printf("          SPEAR:\t\t./var-mii -i eth0 -a 0x0  -r 0x2\n");
+	printf("          SP8Cusbomboard:\t./var-mii -i eth1 -a 0x1  -r 0x2\n");
+	abort();
 }
 
 #define MACHINE_LEN 100
@@ -221,15 +224,29 @@ static char * get_soc() {
 	return soc_name;
 }
 
+static char * soc_arg = NULL;
 static machine_phyconfig_t * get_machine_phyconfig() {
 	char * machine = get_soc_machine();
 	char * soc = get_soc();
 	machine_phyconfig_t * machine_phyconfig = NULL;
 
+	if(soc_arg)
+		soc = soc_arg;
+
 	/* Select phy configuration based on SoC name */
-	if (strstr(soc, "i.MX8MQ") || strstr(soc, "imx8mq")) {
+	if (strstr(soc, "i.MX8MQ") || strstr(soc, "imx8mq"))
 		machine_phyconfig = &machine_config_imx8mq;
-	}
+	else if (strstr(soc, "i.MX8MM") || strstr(soc, "imx8mm"))
+		machine_phyconfig = &machine_config_imx8mm;
+	else if (strstr(soc, "i.MX8MP") || strstr(soc, "imx8mp"))
+		machine_phyconfig = &machine_config_imx8mp;
+	else if (strstr(soc, "i.MX8MN") || strstr(soc, "imx8mn"))
+		machine_phyconfig = &machine_config_imx8mn;
+	else if (strstr(soc, "i.MX8QM") || strstr(soc, "imx8qm"))
+		machine_phyconfig = &machine_config_imx8qm;
+	else if (strstr(soc, "i.MX8QXP") || strstr(soc, "imx8qxp"))
+		machine_phyconfig = &machine_config_imx8qx;
+
 
 	if (machine_phyconfig != NULL)
 		return machine_phyconfig;
@@ -329,27 +346,72 @@ int main(int argc, char *argv[])
 	phy_t phy;
 	int phy_reg = -1;
 	__u16 phy_val = 0xffff;
+	int c, index;
 
-	/* parse args */
-	if (argc == 4) {
-		/* read */
-		phy.if_name = argv[1];
-		phy.addr = strtol(argv[2], NULL, 0);
-		phy_reg = strtol(argv[3], NULL, 0);
-	} else if (argc == 5) {
-		/* write */
-		phy.if_name = argv[1];
-		phy.addr = strtol(argv[2], NULL, 0);
-		phy_reg = strtol(argv[3], NULL, 0);
-		phy_val = strtol(argv[4], NULL, 0);
-	} else if (argc == 2) {
-		/* U-Boot or Linux automated test */
-		if (!strstr(argv[1], "/dev/tty")) {
-			usage();
-			return RET_BAD_ARGS;
-		} else {
-			serial_open(argv[1], B115200, 1);
+	memset(&phy, 0, sizeof(phy_t));
+	phy.addr = 0xff;
+
+	opterr = 0;
+
+	while ((c = getopt (argc, argv, "hi:a:r:v:d:s:")) != -1) {
+		switch (c){
+		case 'h': /* help */
+			usage(NULL);
+			break;
+		case 'i': /* interface */
+			phy.if_name = optarg;
+			break;
+		case 'a': /* address */
+			phy.addr = strtol(optarg, NULL, 16);
+			break;
+		case 'r': /* register */
+			phy_reg = strtol(optarg, NULL, 16);
+			break;
+		case 'v': /* value */
+			phy_val = strtol(optarg, NULL, 16);
+			break;
+		case 'd': /* U-Boot or Linux automated test */
+			if (!strstr(optarg, "/dev/tty")) {
+				usage("Invalid argument for -d");
+			} else {
+				serial_open(optarg, B115200, 1);
+			}
+			break;
+		case 's': /* soc override */
+			soc_arg = optarg;
+			break;
+		case '?':
+			switch(optopt) {
+			case 'i':
+			case 'a':
+			case 'r':
+			case 'v':
+			case 'd':
+				fprintf (stderr, "Option -%c requires an argument.\n", optopt);
+				break;
+			default:
+				if (isprint (optopt))
+					fprintf (stderr, "Unknown option `-%c'.\n", optopt);
+				else
+					fprintf (stderr, "Unknown option or character `\\x%x'.\n", optopt);
+			}
+		default:
+			usage(NULL);
 		}
+	}
+
+	for (index = optind; index < argc; index++) {
+		printf ("Error: Non-option argument %s\n", argv[index]);
+		usage(NULL);
+	}
+
+	if (phy.if_name) {
+		if (phy.addr == 0xff)
+			usage("Missing phy address");
+		if (phy.id == 0xffffffff)
+			usage("Missing phy id");
+		if (phy_reg == -1)
+			usage("Missing phy register to read/write");
 	}
 
 	/* If value arg passed, write this register */
