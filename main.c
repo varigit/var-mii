@@ -168,7 +168,7 @@ static void usage(const char * err) {
 	printf("          DT8MCusbomboard:\t./var-mii -i eth1 -a 0x1  -r 0x2\n");
 	printf("          SPEAR:\t\t./var-mii -i eth0 -a 0x0  -r 0x2\n");
 	printf("          SP8Cusbomboard:\t./var-mii -i eth1 -a 0x1  -r 0x2\n");
-	abort();
+	exit(1);
 }
 
 #define MACHINE_LEN 100
