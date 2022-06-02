@@ -179,7 +179,7 @@ static char * get_soc_machine() {
 	snprintf(soc_machine, MACHINE_LEN, "Unknown");
 
 	if (serial_active()) {
-		serial_write_read_str("echo $board_name\r\n", soc_machine, MACHINE_LEN);
+		serial_write_read_str("echo $board_name", soc_machine, MACHINE_LEN);
 	} else {
 		FILE *f;
 
@@ -205,7 +205,7 @@ static char * get_soc() {
 	snprintf(soc_name, MACHINE_LEN, "Unknown");
 
 	if (serial_active()) {
-		serial_write_read_str("echo $soc_type\r\n", soc_name, MACHINE_LEN);
+		serial_write_read_str("echo $soc_type", soc_name, MACHINE_LEN);
 	} else {
 		FILE *f;
 

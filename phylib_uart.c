@@ -53,22 +53,24 @@ int serial_write_read_str(const char * tx_buf, char * rx_buf, int max_len) {
 	char rx_buf_tmp[PHYLIB_BUF_SIZE];
 	char * p_start, * p_end;
 
+	memset(rx_buf_tmp, 0, PHYLIB_BUF_SIZE);
+
 	rx_buf[0] = 0;
 	serial_write_str(tx_buf);
+	serial_write_str("\r\n");
 	len = serial_read_str(rx_buf_tmp, max_len);
 
 	if (len <= 0)
 		return len;
-
 	/* Remove U-Boot echo of transmit string */
-	p_start = strstr(rx_buf_tmp, tx_buf);
-	if (p_start)
-		p_start += strlen(tx_buf);
-	else
-		p_start = rx_buf_tmp;
+	p_start = strstr(rx_buf_tmp, "\n");
+
+	if (!p_start)
+		return snprintf(rx_buf, max_len, "%s", rx_buf_tmp);
+	p_start++;
 
 	/* Remove trailing U-Boot> prompt */
-	p_end = strstr(p_start, "\r\n");
+	p_end = strstr(p_start, "\n");
 	if (p_end)
 		*p_end = 0;
 
