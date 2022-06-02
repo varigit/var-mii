@@ -1,7 +1,6 @@
 #ifndef _PHY_ATH_H
 #define _PHY_ATH_H
 
-#include <include/utils.h>
 #include "phylib.h"
 
 #define AR803x_PHY_ID_1             0x4d

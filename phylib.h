@@ -5,6 +5,8 @@
 #include <linux/types.h>
 #include <stdint.h>
 
+#define BIT(nr)                 (1UL << (nr))
+
 typedef struct {
 	const char * if_name;
 	uint8_t addr;

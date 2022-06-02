@@ -1,5 +1,4 @@
 #include <linux/types.h>
-#include <include/utils.h>
 #include <string.h>
 #include <stdio.h>
 #include "phy_adin1300.h"

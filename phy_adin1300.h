@@ -1,7 +1,6 @@
 #ifndef _PHY_ADIN_H
 #define _PHY_ADIN_H
 
-#include <include/utils.h>
 #include "phylib.h"
 
 #define ADIN1300_PHY_ID_1               0x283
