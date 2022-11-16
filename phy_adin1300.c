@@ -4,22 +4,12 @@
 #include "phy_adin1300.h"
 #include "phylib.h"
 
-int adin1300_read_extended(const phy_t * phy, const int phy_reg, __u16 * value) {
-	mii_write_reg(phy, ADIN1300_EXT_REG_PTR, phy_reg);
-	return mii_read_reg(phy, ADIN1300_EXT_REG_DATA, value);
-}
-
-int adin1300_write_extended(const phy_t * phy, const int phy_reg, __u16 value) {
-	mii_write_reg(phy, ADIN1300_EXT_REG_PTR, phy_reg);
-	return mii_write_reg(phy, ADIN1300_EXT_REG_DATA, value);
-}
-
 int adin1300_verify_phy_mode(const phy_t * phy, const char * mode) {
 	__u16 value;
 	int ret = 0;
 
 	/* read rgmii regsiter */
-	adin1300_read_extended(phy, ADIN1300_GE_RGMII_CFG, &value);
+	mii_read_reg_ext(phy, ADIN1300_GE_RGMII_CFG, &value);
 
 	if (!(value & ADIN1300_GE_RGMII_EN)) {
 		printf("%s:\tError: ADIN1300_GE_RGMII_EN is disabled\n", __func__);
@@ -81,7 +71,7 @@ int adin1300_verify_clk_rcvr_125(const phy_t * phy, const int clk_rcvr_125_en) {
 	int ret;
 
 	/* read clock config regsiter */
-	adin1300_read_extended(phy, ADIN1300_GE_CLK_CFG, &value);
+	mii_read_reg_ext(phy, ADIN1300_GE_CLK_CFG, &value);
 
 	/* verify clk_rcvr_125_en bit */
 	if (clk_rcvr_125_en == (value & ADIN1300_GE_CLK_RCVR_125_EN)) {

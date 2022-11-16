@@ -19,6 +19,8 @@ typedef struct {
 
 int mii_read_reg(const phy_t * phy, const int phy_reg, __u16 * value);
 int mii_write_reg(const phy_t * phy, const int phy_reg, const __u16 phy_val);
+int mii_read_reg_ext(const phy_t * phy, const int phy_reg, __u16 * value);
+int mii_write_reg_ext(const phy_t * phy, const int phy_reg, const __u16 phy_val);
 /* initialize u-boot uart */
 int phylib_uboot_uart_open(const char * uboot_tty);
 void phylib_uboot_uart_close();

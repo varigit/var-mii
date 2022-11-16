@@ -4,23 +4,13 @@
 #include "phy_ar803x.h"
 #include "phylib.h"
 
-int ar803x_read_extended(const phy_t * phy, const int phy_reg, __u16 * value) {
-	mii_write_reg(phy, AR803x_PHY_DEBUG_ADDR_REG, phy_reg);
-	return mii_read_reg(phy, AR803x_PHY_DEBUG_DATA_REG, value);
-}
-
-int ar803x_write_extended(const phy_t * phy, const int phy_reg, __u16 value) {
-	mii_write_reg(phy, AR803x_PHY_DEBUG_ADDR_REG, phy_reg);
-	return mii_write_reg(phy, AR803x_PHY_DEBUG_DATA_REG, value);
-}
-
 int ar803x_verify_phy_mode(const phy_t * phy, const char * mode) {
 	__u16 value_r0, value_r5;
 	int ret = 0;
 
 	/* read rgmii regsiters */
-	ar803x_read_extended(phy, AT803X_DEBUG_REG_0, &value_r0);
-	ar803x_read_extended(phy, AT803X_DEBUG_REG_5, &value_r5);
+	mii_read_reg_ext(phy, AT803X_DEBUG_REG_0, &value_r0);
+	mii_read_reg_ext(phy, AT803X_DEBUG_REG_5, &value_r5);
 
 	if (strcmp(mode, "rgmii") == 0) {
 		if ((value_r5 & AT803X_DEBUG_TX_CLK_DLY_EN)) {
@@ -81,7 +71,7 @@ int ar803x_verify_vddio(const phy_t * phy, const __u16 vddio) {
 		return 0;
 
 	/* read vddio regsiter */
-	ar803x_read_extended(phy, AR803x_DEBUG_REG_31, &value);
+	mii_read_reg_ext(phy, AR803x_DEBUG_REG_31, &value);
 
 	if (vddio != (value & AT803X_VDDIO_1P8V)) {
 		printf("%s:\t\tFAIL: AT803X_VDDIO_1P8V != %d\n", __func__, vddio == 0 ? 0 : 1);

@@ -110,3 +110,25 @@ int mii_write_reg(const phy_t * phy, const int phy_reg, const __u16 phy_val) {
 		return _mii_write_reg(phy, phy_reg, phy_val);
 
 }
+
+int mii_read_reg_ext(const phy_t * phy, const int phy_reg, __u16 * value) {
+	if (phy->reg_extended_ptr < 0 || phy->reg_extended_data < 0) {
+		printf("%s Extended registers not supported for PHY 0x%x@0x%x\n",
+			__func__, phy->id, phy->addr);
+		return -1;
+	}
+
+	mii_write_reg(phy, phy->reg_extended_ptr, phy_reg);
+	return mii_read_reg(phy, phy->reg_extended_data, value);
+}
+
+int mii_write_reg_ext(const phy_t * phy, const int phy_reg, const __u16 phy_val) {
+	if (phy->reg_extended_ptr < 0 || phy->reg_extended_data < 0) {
+		printf("%s Extended registers not supported for PHY 0x%x@0x%x\n",
+			__func__, phy->id, phy->addr);
+		return -1;
+	}
+
+	mii_write_reg(phy, phy->reg_extended_ptr, phy_reg);
+	return mii_write_reg(phy, phy->reg_extended_data, phy_val);
+}
