@@ -31,7 +31,7 @@ static int _mii_read_reg(const phy_t * phy, const int phy_reg, __u16 * value) {
 		if (ioctl(fd, SIOCGMIIREG, &ifr) != -1) {
 			*value = mii->val_out;
 			#if DEBUG
-			printf("%s: %s phy@%d reg 0x%x = 0x%x\n", __func__, if_name, addr, phy_reg, mii->val_out);
+			printf("%s: %s phy@%d reg 0x%x = 0x%x\n", __func__, phy->if_name, phy->addr, phy_reg, mii->val_out);
 			#endif
 		} else {
 			printf("%s: Error: %s phy@%d reg 0x%x ioctl failed\n", __func__, phy->if_name, phy->addr, phy_reg);
@@ -64,7 +64,7 @@ static int _mii_write_reg(const phy_t * phy, const int phy_reg, const __u16 phy_
 	{
 		if (ioctl(fd, SIOCSMIIREG, &ifr) != -1) {
 			#if DEBUG
-			printf("%s: %s phy@%d reg 0x%x = 0x%x\n", __func__, if_name, addr, phy_reg, mii->val_in);
+			printf("%s: %s phy@%d reg 0x%x = 0x%x\n", __func__, phy->if_name, phy->addr, phy_reg, mii->val_in);
 			#endif
 		} else {
 			printf("%s: Error: %s phy@%d reg 0x%x ioctl failed\n", __func__, phy->if_name, phy->addr, phy_reg);
