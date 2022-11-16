@@ -287,6 +287,33 @@ static machine_phyconfig_t * get_machine_phyconfig() {
 	return machine_phyconfig;
 }
 
+static int var_probe_phy_ids() {
+	int i = 0;
+	machine_phyconfig_t * machine_config = get_machine_phyconfig();
+	for (i = 0; machine_config->phy_configs[i].phy.if_name != NULL; i++) {
+		__u16 phy_val = 0xffff;
+		phyconfig_t * phy_config = &machine_config->phy_configs[i];
+
+		/* Read the phy id */
+		if (mii_read_reg(&phy_config->phy, MII_PHYSID1, &phy_val))
+			return RET_IO_ERR;
+
+		/* Save the phy id */
+		phy_config->phy.id_actual = (uint32_t) phy_val;
+	}
+
+	return 0;
+}
+
+static int var_init_phys() {
+	if (var_probe_phy_ids()) {
+		printf("Failed to probe phy ids\n");
+		return RET_ERROR;
+	}
+
+	return 0;
+}
+
 static int var_verify_phys() {
 	int i = 0;
 	uint8_t verified_phys = 0;
@@ -297,20 +324,16 @@ static int var_verify_phys() {
 	}
 
 	for (i = 0; machine_config->phy_configs[i].phy.if_name != NULL; i++) {
-		__u16 phy_val = 0xffff;
 		const phyconfig_t phy_config = machine_config->phy_configs[i];
 
 		/* Check if phy id matches */
-		if (mii_read_reg(&phy_config.phy, MII_PHYSID1, &phy_val))
-			return RET_IO_ERR;
-
-		if (phy_val != phy_config.phy.id) {
+		if (phy_config.phy.id_actual != phy_config.phy.id) {
 			DEBUG_PRINT("%s:not found: %s 0x%x@0x%x (0x%x)\n", __func__, phy_config.phy.if_name,
-			       phy_config.phy.id, phy_config.phy.addr, phy_val);
+			       phy_config.phy.id, phy_config.phy.addr, phy_config.phy.id_actual);
 			continue;
 		}
 
-		switch (phy_val) {
+		switch (phy_config.phy.id_actual) {
 			case ADIN1300_PHY_ID_1:
 				printf("%s:\t\tPHY@%d: ADIN1300\n", __func__, phy_config.phy.addr);
 				if (adin1300_verify_phy_mode(&phy_config.phy, phy_config.phy.mode)) {
@@ -337,7 +360,7 @@ static int var_verify_phys() {
 				verified_phys++;
 				break;
 			default:
-				printf("%s:\t\tPHY@%d: Unknown ID: 0x%x\n", __func__, phy_config.phy.addr, phy_val);
+				printf("%s:\t\tPHY@%d: Unknown ID: 0x%x\n", __func__, phy_config.phy.addr, phy_config.phy.id_actual);
 				return RET_UNKNOWN_PHY;
 				break;
 		}
@@ -423,6 +446,11 @@ int main(int argc, char *argv[])
 			usage("Missing phy id");
 		if (phy_reg == -1)
 			usage("Missing phy register to read/write");
+	}
+
+	if (var_init_phys()) {
+		printf("Failed to int phys\n");
+		return RET_ERROR;
 	}
 
 	/* If value arg passed, write this register */

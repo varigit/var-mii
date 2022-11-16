@@ -10,7 +10,8 @@
 typedef struct {
 	const char * if_name;
 	uint8_t addr;
-	uint32_t id;
+	uint32_t id; /* the target id used to match the correct phy_config*/
+	uint32_t id_actual; /* the actual id read from mdio */
 	const char * mode;
 } phy_t;
 
