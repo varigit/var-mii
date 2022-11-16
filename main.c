@@ -305,7 +305,37 @@ static int var_probe_phy_ids() {
 	return 0;
 }
 
+static int var_init_phy_extended_registers() {
+	int i = 0;
+	machine_phyconfig_t * machine_config = get_machine_phyconfig();
+	for (i = 0; machine_config->phy_configs[i].phy.if_name != NULL; i++) {
+		phyconfig_t * phy_config = &machine_config->phy_configs[i];
+
+		switch(phy_config->phy.id) {
+			case ADIN1300_PHY_ID_1:
+				phy_config->phy.reg_extended_ptr = ADIN1300_EXT_REG_PTR;
+				phy_config->phy.reg_extended_data = ADIN1300_EXT_REG_DATA;
+				break;
+			case AR803x_PHY_ID_1:
+				phy_config->phy.reg_extended_ptr = AR803x_PHY_DEBUG_ADDR_REG;
+				phy_config->phy.reg_extended_data = AR803x_PHY_DEBUG_DATA_REG;
+				break;
+			default:
+				phy_config->phy.reg_extended_ptr = -1;
+				phy_config->phy.reg_extended_data = -1;
+				printf("default\n");
+		}
+	}
+
+	return 0;
+}
+
 static int var_init_phys() {
+	if (var_init_phy_extended_registers()) {
+		printf("Failed to intialize extended registers\n");
+		return RET_ERROR;
+	}
+
 	if (var_probe_phy_ids()) {
 		printf("Failed to probe phy ids\n");
 		return RET_ERROR;
