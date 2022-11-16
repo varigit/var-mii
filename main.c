@@ -174,10 +174,11 @@ static void usage(const char * err) {
 
 #define MACHINE_LEN 100
 static char * get_soc_machine() {
-	static char soc_machine[MACHINE_LEN];
+	static char soc_machine[MACHINE_LEN] = "Unknown";
 	char * ret;
 
-	snprintf(soc_machine, MACHINE_LEN, "Unknown");
+	if (strcmp(soc_machine, "Unknown"))
+		return soc_machine;
 
 	if (serial_active()) {
 		serial_write_read_str("echo $board_name", soc_machine, MACHINE_LEN);
@@ -204,10 +205,11 @@ static char * get_soc_machine() {
 }
 
 static char * get_soc() {
-	static char soc_name[MACHINE_LEN];
+	static char soc_name[MACHINE_LEN] = "Unknown";
 	char * ret;
 
-	snprintf(soc_name, MACHINE_LEN, "Unknown");
+	if (strcmp(soc_name, "Unknown"))
+		return soc_name;
 
 	if (serial_active()) {
 		serial_write_read_str("echo $soc_type", soc_name, MACHINE_LEN);
