@@ -157,11 +157,12 @@ static void usage(const char * err) {
 	printf("  2) Run an automated test from a host, while the target is running U-Boot:\n");
 	printf("    $ ./var-mii -d <console tty device>\n");
 	printf("  3) Read/Write mii registers on the target, while the target is running Linux:\n");
-	printf("    # ./var-mii -i <interface> -a <address> -r <register> -v <value>\n");
+	printf("    # ./var-mii -i <interface> -a <address> -r <register> -v <value> -e\n");
 	printf("          interface: eth0, eth1, etc.\n");
 	printf("          address: Phy Address\n");
 	printf("          register: Optional argument to skip test and instead read a register\n");
 	printf("          value: Optional argument to skip test and instead write a register\n\n");
+	printf("          -e: Optional argument to indicate 'register / -r' is an extended register\n\n");
 	printf("    Examples:\n\n");
 	printf("          SOM:\t\t\t./var-mii -i eth0 -a 0x04 -r 0x2\n");
 	printf("          Symphony:\t\t./var-mii -i eth1 -a 0x05 -r 0x2\n");
@@ -344,6 +345,32 @@ static int var_init_phys() {
 	return 0;
 }
 
+/* return phy config given a if_name and addr */
+static phyconfig_t * get_phy_config(const char * if_name, uint8_t addr) {
+	int i = 0;
+	machine_phyconfig_t * machine_config = get_machine_phyconfig();
+
+	for (i = 0; machine_config->phy_configs[i].phy.if_name != NULL; i++) {
+		phyconfig_t * phy_config = &machine_config->phy_configs[i];
+
+		/* Check if phy id matches */
+		if (phy_config->phy.id_actual != phy_config->phy.id)
+			continue;
+
+		/* Check if phy address matches */
+		if (phy_config->phy.addr != addr)
+			continue;
+
+		/* Check if phy if_name matches */
+		if (strcmp(phy_config->phy.if_name, if_name))
+			continue;
+
+		return phy_config;
+	}
+
+	return NULL;
+}
+
 static int var_verify_phys() {
 	int i = 0;
 	uint8_t verified_phys = 0;
@@ -409,6 +436,7 @@ int main(int argc, char *argv[])
 {
 	phy_t phy;
 	int phy_reg = -1;
+	int phy_reg_is_extended = 0;
 	__u16 phy_val = 0xffff;
 	int c, index;
 
@@ -417,7 +445,7 @@ int main(int argc, char *argv[])
 
 	opterr = 0;
 
-	while ((c = getopt (argc, argv, "hi:a:r:v:d:s:")) != -1) {
+	while ((c = getopt (argc, argv, "hei:a:r:v:d:s:")) != -1) {
 		switch (c){
 		case 'h': /* help */
 			usage(NULL);
@@ -427,6 +455,9 @@ int main(int argc, char *argv[])
 			break;
 		case 'a': /* address */
 			phy.addr = strtol(optarg, NULL, 16);
+			break;
+		case 'e': /* extended */
+			phy_reg_is_extended = 1;
 			break;
 		case 'r': /* register */
 			phy_reg = strtol(optarg, NULL, 16);
@@ -483,15 +514,41 @@ int main(int argc, char *argv[])
 		return RET_ERROR;
 	}
 
+	/*
+	User is requesting a manual read/write of an extended register
+	Try to identify the phy and get the extended registers from the phy
+	configuration
+	*/
+	if (phy_reg_is_extended && (phy_val != 0xffff || phy_reg >= 0)) {
+		phyconfig_t * phy_config = get_phy_config(phy.if_name, phy.addr);
+
+		if (phy_config == NULL) {
+			printf("Error: Could not get phy configuration to determine extended registers\n");
+			return RET_ERROR;
+		}
+
+		memcpy(&phy, &phy_config->phy, sizeof(phy_t));
+	}
+
 	/* If value arg passed, write this register */
 	if (phy_val != 0xffff) {
-		if (mii_write_reg(&phy, phy_reg, phy_val))
-			return RET_IO_ERR;
+		if (!phy_reg_is_extended) {
+			if (mii_write_reg(&phy, phy_reg, phy_val))
+				return RET_IO_ERR;
+		} else {
+			if (mii_write_reg_ext(&phy, phy_reg, phy_val))
+				return RET_IO_ERR;
+		}
 	}
 	/* If register arg passed, read this register and exit */
 	if (phy_reg >= 0) {
-		if (mii_read_reg(&phy, phy_reg, &phy_val))
-			return RET_IO_ERR;
+		if (!phy_reg_is_extended) {
+			if (mii_read_reg(&phy, phy_reg, &phy_val))
+				return RET_IO_ERR;
+		} else {
+			if (mii_read_reg_ext(&phy, phy_reg, &phy_val))
+				return RET_IO_ERR;
+		}
 		printf("%x\n", phy_val);
 		return 0;
 	}
