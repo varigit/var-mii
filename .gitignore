@@ -1,4 +1,6 @@
 var-mii
+var-mii-32
+var-mii-64
 *.bin
 core
 *.o

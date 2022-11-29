@@ -10,3 +10,6 @@ $(TARGET): $(OBJFILES)
 
 clean:
 	rm -f $(OBJFILES) $(TARGET)
+
+cleanall: clean
+	rm -f var-mii-32 var-mii-64
