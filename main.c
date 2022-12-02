@@ -146,6 +146,17 @@ machine_phyconfig_t machine_config_imx8qm = {
 	},
 };
 
+machine_phyconfig_t machine_config_imx6ul = {
+	.phy_count = 2,
+	.phy_configs = {
+		/* concerto */
+		{ .phy = { .if_name = "eth0", .addr = 1, .id = KSZ9031_PHY_ID_1, .mode = "rmii-ref" }},
+		{ .phy = { .if_name = "eth1", .addr = 3, .id = KSZ9031_PHY_ID_1, .mode = "rmii-ref" }},
+		/* last entry */
+		{ .phy = { .if_name = NULL }},
+	},
+};
+
 static void usage(const char * err) {
 	if (err)
 		printf("Error: %s\n", err);
@@ -258,6 +269,8 @@ static machine_phyconfig_t * get_machine_phyconfig() {
 		machine_phyconfig = &machine_config_imx8qm;
 	else if (strstr(soc, "i.MX8QXP") || strstr(soc, "imx8qxp"))
 		machine_phyconfig = &machine_config_imx8qx;
+	else if (strstr(soc, "i.MX6UL") && !strstr(soc, "i.MX6ULZ"))
+		machine_phyconfig = &machine_config_imx6ul;
 
 
 	if (machine_phyconfig != NULL)
@@ -423,8 +436,8 @@ static int var_verify_phys() {
 				verified_phys++;
 				break;
 			case KSZ9031_PHY_ID_1:
-				printf("%s:\t\tPHY@%d: KSZ9031\n", __func__, phy_config.phy.addr);
-				/* For now, don't do any verification for KSZ9031, just acknowledge it was found */
+				printf("%s:\t\tPHY@%d: KSZ9031/KSZ8081\n", __func__, phy_config.phy.addr);
+				/* For now, don't do any verification for KSZ9031/KSZ8081, just acknowledge it was found */
 				verified_phys++;
 				break;
 			default:
