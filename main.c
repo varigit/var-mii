@@ -291,6 +291,10 @@ static machine_phyconfig_t * get_machine_phyconfig() {
 static int var_probe_phy_ids() {
 	int i = 0;
 	machine_phyconfig_t * machine_config = get_machine_phyconfig();
+
+	if (machine_config == NULL)
+		return RET_UNKNOWN_PHY;
+
 	for (i = 0; machine_config->phy_configs[i].phy.if_name != NULL; i++) {
 		__u16 phy_val = 0xffff;
 		phyconfig_t * phy_config = &machine_config->phy_configs[i];
@@ -309,6 +313,10 @@ static int var_probe_phy_ids() {
 static int var_init_phy_extended_registers() {
 	int i = 0;
 	machine_phyconfig_t * machine_config = get_machine_phyconfig();
+
+	if (machine_config == NULL)
+		return RET_UNKNOWN_PHY;
+
 	for (i = 0; machine_config->phy_configs[i].phy.if_name != NULL; i++) {
 		phyconfig_t * phy_config = &machine_config->phy_configs[i];
 
@@ -349,6 +357,9 @@ static int var_init_phys() {
 static phyconfig_t * get_phy_config(const char * if_name, uint8_t addr) {
 	int i = 0;
 	machine_phyconfig_t * machine_config = get_machine_phyconfig();
+
+	if (machine_config == NULL)
+		return NULL;
 
 	for (i = 0; machine_config->phy_configs[i].phy.if_name != NULL; i++) {
 		phyconfig_t * phy_config = &machine_config->phy_configs[i];
