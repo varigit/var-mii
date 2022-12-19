@@ -269,8 +269,12 @@ static machine_phyconfig_t * get_machine_phyconfig() {
 		machine_phyconfig = &machine_config_imx8qm;
 	else if (strstr(soc, "i.MX8QXP") || strstr(soc, "imx8qxp"))
 		machine_phyconfig = &machine_config_imx8qx;
+	else if (strstr(soc, "i.MX7D"))
+		machine_phyconfig = &machine_config_imx7;
 	else if (strstr(soc, "i.MX6UL") && !strstr(soc, "i.MX6ULZ"))
 		machine_phyconfig = &machine_config_imx6ul;
+	else if (strstr(soc, "i.MX6") && !strstr(soc, "i.MX6ULZ"))
+		machine_phyconfig = &machine_config_imx6dl;
 
 
 	if (machine_phyconfig != NULL)
