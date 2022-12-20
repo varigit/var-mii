@@ -82,6 +82,20 @@ machine_phyconfig_t machine_config_imx8mn = {
 	},
 };
 
+machine_phyconfig_t machine_config_imx93 = {
+	.phy_count = 2,
+	.phy_configs = {
+		/* symphony */
+		{ .phy = { .if_name = "eth0", .addr = 0, .id = ADIN1300_PHY_ID_1, .mode = "rgmii" }},
+		{ .phy = { .if_name = "eth1", .addr = 5, .id = ADIN1300_PHY_ID_1, .mode = "rgmii" }},
+		{ .phy = { .if_name = "eth0", .addr = 0, .id = AR803x_PHY_ID_1,   .mode = "rgmii" }, .ar803_vddio = AT803X_VDDIO_1P8V },
+		{ .phy = { .if_name = "eth1", .addr = 5, .id = AR803x_PHY_ID_1,   .mode = "rgmii" }, .ar803_vddio = AT803X_VDDIO_1P8V },
+		/* last entry */
+		{ .phy = { .if_name = NULL }},
+
+	},
+};
+
 machine_phyconfig_t machine_config_imx8mq = {
 	.phy_count = 1,
 	.phy_configs = {
@@ -275,7 +289,8 @@ static machine_phyconfig_t * get_machine_phyconfig() {
 		machine_phyconfig = &machine_config_imx6ul;
 	else if (strstr(soc, "i.MX6") && !strstr(soc, "i.MX6ULZ"))
 		machine_phyconfig = &machine_config_imx6dl;
-
+	else if (strstr(soc, "i.MX93") || strstr(soc, "imx93"))
+		machine_phyconfig = &machine_config_imx93;
 
 	if (machine_phyconfig != NULL)
 		return machine_phyconfig;
