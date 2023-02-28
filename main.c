@@ -254,7 +254,6 @@ static char * get_soc() {
 
 		f=fopen("/sys/devices/soc0/soc_id","r");
 		if (!f) {
-			printf("%s: Error: Could not open /sys/devices/soc0/soc_id\n", __func__);
 			return soc_name;
 		}
 		ret = fgets(soc_name, MACHINE_LEN, f);
