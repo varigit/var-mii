@@ -294,9 +294,14 @@ static machine_phyconfig_t * get_machine_phyconfig() {
 		machine_phyconfig = &machine_config_imx8qx;
 	else if (strstr(soc, "i.MX7D"))
 		machine_phyconfig = &machine_config_imx7;
-	else if (strstr(soc, "i.MX6UL") && !strstr(soc, "i.MX6ULZ"))
+	else if (strstr(soc, "i.MX6UL") && !strstr(soc, "i.MX6ULZ")) {
+		/* VAR-SOM-6UL on SymphonyBoard don't support on-board phy */
+		if (strstr(machine, "Symphony") || strstr(machine, "symphony")) {
+			machine_config_imx6ul.phy_count = 1;
+			machine_config_imx6ul.phy_configs[1].phy.if_name = NULL;
+		}
 		machine_phyconfig = &machine_config_imx6ul;
-	else if (strstr(soc, "i.MX6") && !strstr(soc, "i.MX6ULZ"))
+	} else if (strstr(soc, "i.MX6") && !strstr(soc, "i.MX6ULZ"))
 		machine_phyconfig = &machine_config_imx6dl;
 	else if (strstr(soc, "i.MX93") || strstr(soc, "imx93"))
 		machine_phyconfig = &machine_config_imx93;
