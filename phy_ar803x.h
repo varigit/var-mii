@@ -18,8 +18,6 @@
 #define AT803X_VDDIO_1P8V           BIT(3)
 #define AT803X_VDDIO_DONTCARE       0xff
 
-int ar803x_read_extended(const phy_t * phy, const int phy_reg, __u16 * value);
-int ar803x_write_extended(const phy_t * phy, const int phy_reg, __u16 value);
 int ar803x_verify_phy_mode(const phy_t * phy, const char * mode);
 int ar803x_verify_vddio(const phy_t * phy, const __u16 vddio);
 

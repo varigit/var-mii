@@ -22,8 +22,6 @@
 #define   ADIN1300_RGMII_2_20_NS        0x0006
 #define   ADIN1300_RGMII_2_40_NS        0x0007
 
-int adin1300_read_extended(const phy_t * phy, const int phy_reg, __u16 * value);
-int adin1300_write_extended(const phy_t * phy, const int phy_reg, __u16 value);
 int adin1300_verify_phy_mode(const phy_t * phy, const char * mode);
 int adin1300_verify_clk_rcvr_125(const phy_t * phy, const int clk_rcvr_125_en);
 
