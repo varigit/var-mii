@@ -13,6 +13,7 @@
 #include "phy_adin1300.h"
 #include "phy_ar803x.h"
 #include "phy_ksz9031.h"
+#include "phy_mxl86110.h"
 
 #define RET_IO_ERR -2
 #define RET_UNKNOWN_PHY -3
@@ -97,6 +98,7 @@ machine_phyconfig_t machine_config_imx93 = {
 	.phy_count = 2,
 	.phy_configs = {
 		/* symphony */
+		{ .phy = { .if_name = "eth0", .addr = 0, .id = MXL86110_PHY_ID_1, .mode = "rgmii" }},
 		{ .phy = { .if_name = "eth0", .addr = 0, .id = ADIN1300_PHY_ID_1, .mode = "rgmii" }},
 		{ .phy = { .if_name = "eth1", .addr = 5, .id = ADIN1300_PHY_ID_1, .mode = "rgmii" }},
 		{ .phy = { .if_name = "eth0", .addr = 0, .id = AR803x_PHY_ID_1,   .mode = "rgmii" }, .ar803_vddio = AT803X_VDDIO_1P8V },
@@ -377,6 +379,10 @@ static int var_init_phy_extended_registers() {
 				phy_config->phy.reg_extended_ptr = AR803x_PHY_DEBUG_ADDR_REG;
 				phy_config->phy.reg_extended_data = AR803x_PHY_DEBUG_DATA_REG;
 				break;
+			case MXL86110_PHY_ID_1:
+				phy_config->phy.reg_extended_ptr = MXL86110_EXT_REG_PTR;
+				phy_config->phy.reg_extended_data = MXL86110_EXT_REG_DATA;
+				break;
 			default:
 				phy_config->phy.reg_extended_ptr = -1;
 				phy_config->phy.reg_extended_data = -1;
@@ -473,6 +479,16 @@ static int var_verify_phys() {
 			case KSZ9031_PHY_ID_1:
 				printf("%s:\t\tPHY@%d: KSZ9031/KSZ8081\n", __func__, phy_config.phy.addr);
 				/* For now, don't do any verification for KSZ9031/KSZ8081, just acknowledge it was found */
+				verified_phys++;
+				break;
+			case MXL86110_PHY_ID_1:
+				printf("%s:\t\tPHY@%d: MXL86110\n", __func__, phy_config.phy.addr);
+				if (mxl86110_verify_phy_mode(&phy_config.phy, phy_config.phy.mode)) {
+					continue;
+				}
+				if (mxl86110_verify_led_cfg(&phy_config.phy)) {
+					continue;
+				}
 				verified_phys++;
 				break;
 			default:
