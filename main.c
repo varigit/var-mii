@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <termios.h>
-#include <argp.h>
+#include <ctype.h>
 #include "phylib.h"
 #include "phylib_uart.h"
 #include "phy_adin1300.h"
