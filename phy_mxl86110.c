@@ -6,7 +6,11 @@
 #include "phylib.h"
 
 #define GENMASK(msb, lsb) (((1UL << ((msb) - (lsb) + 1)) - 1) << (lsb))
+#if defined(ffs)
 #define FIELD_GET(mask, value) (((value) & (mask)) >> (ffs(mask) - 1))
+#else
+#define FIELD_GET(mask, value) (((value) & (mask)) >> (__builtin_ffs(mask) - 1))
+#endif
 
 /* RGMII register */
 #define MXL8611X_EXT_RGMII_CFG1_REG1						0xA003
