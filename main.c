@@ -100,11 +100,13 @@ machine_phyconfig_t machine_config_imx93 = {
 	.phy_count = 2,
 	.phy_configs = {
 		/* symphony */
-		{ .phy = { .if_name = "eth0", .addr = 0, .id = MXL86110_PHY_ID_1, .mode = "rgmii" }},
+		{ .phy = { .if_name = "eth0", .addr = 0, .id = MXL86110_PHY_ID_1, .mode = "rgmii" }}, /* both imx93-var-som and imx93-var-dart */
 		{ .phy = { .if_name = "eth0", .addr = 0, .id = ADIN1300_PHY_ID_1, .mode = "rgmii" }},
 		{ .phy = { .if_name = "eth1", .addr = 5, .id = ADIN1300_PHY_ID_1, .mode = "rgmii" }},
 		{ .phy = { .if_name = "eth0", .addr = 0, .id = AR803x_PHY_ID_1,   .mode = "rgmii" }, .ar803_vddio = AT803X_VDDIO_1P8V },
 		{ .phy = { .if_name = "eth1", .addr = 5, .id = AR803x_PHY_ID_1,   .mode = "rgmii" }, .ar803_vddio = AT803X_VDDIO_1P8V },
+		/* dt8mcustomboard */
+		{ .phy = { .if_name = "eth1", .addr = 1, .id = ADIN1300_PHY_ID_1, .mode = "rgmii" }},
 		/* last entry */
 		{ .phy = { .if_name = NULL }},
 	},
