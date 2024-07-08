@@ -112,6 +112,17 @@ machine_phyconfig_t machine_config_imx93 = {
 	},
 };
 
+machine_phyconfig_t machine_config_imx95 = {
+	.phy_count = 2,
+	.phy_configs = {
+		/* dt8mcustomboard */
+		{ .phy = { .if_name = "eth0", .addr = 0, .id = MXL86110_PHY_ID_1, .mode = "rgmii" }},
+		{ .phy = { .if_name = "eth1", .addr = 1, .id = ADIN1300_PHY_ID_1, .mode = "rgmii" }},
+		/* last entry */
+		{ .phy = { .if_name = NULL }},
+	},
+};
+
 machine_phyconfig_t machine_config_imx8mq = {
 	.phy_count = 1,
 	.phy_configs = {
@@ -311,6 +322,8 @@ static machine_phyconfig_t * get_machine_phyconfig() {
 		machine_phyconfig = &machine_config_imx6dl;
 	else if (strstr(soc, "i.MX93") || strstr(soc, "imx93"))
 		machine_phyconfig = &machine_config_imx93;
+	else if (strstr(soc, "i.MX95") || strstr(soc, "imx95"))
+		machine_phyconfig = &machine_config_imx95;
 
 	if (machine_phyconfig != NULL)
 		return machine_phyconfig;
