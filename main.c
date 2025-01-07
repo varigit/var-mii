@@ -81,6 +81,7 @@ machine_phyconfig_t machine_config_imx8mm = {
 		/* symphony */
 		{ .phy = { .if_name = "eth0", .addr = 4, .id = ADIN1300_PHY_ID_1, .mode = "rgmii" }},
 		{ .phy = { .if_name = "eth0", .addr = 4, .id = AR803x_PHY_ID_1,   .mode = "rgmii" }, .ar803_vddio = AT803X_VDDIO_1P8V },
+		{ .phy = { .if_name = "eth0", .addr = 4, .id = MXL86110_PHY_ID_1, .mode = "rgmii" }},
 		/* last entry */
 		{ .phy = { .if_name = NULL }},
 	},
