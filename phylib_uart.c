@@ -38,8 +38,14 @@ int serial_read_str(char *buf, int max_len)
 int serial_write(const char *buf, int len)
 {
 	tcflush(fd, TCIOFLUSH);
-	len = write(fd, buf, len);
-	tcdrain(fd);
+	/* Use inter-byte delays to limit data rate and comply with
+	   low traffic capabilities (as seen for i.MX9 SoCs) */
+	for (int i = 0; i < len; i++) {
+		write(fd, &buf[i], 1);
+		tcdrain(fd);
+		usleep(20000); /* 20ms */
+	}
+
 	return len;
 }
 
