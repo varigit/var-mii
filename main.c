@@ -126,6 +126,8 @@ machine_phyconfig_t machine_config_imx93 = {
 		{ .phy = { .if_name = "eth1", .addr = 5, .id = AR803x_PHY_ID_1,   .mode = "rgmii" }, .ar803_vddio = AT803X_VDDIO_1P8V },
 		/* dt8mcustomboard */
 		{ .phy = { .if_name = "eth1", .addr = 1, .id = ADIN1300_PHY_ID_1, .mode = "rgmii" }},
+		/* sonata */
+		{ .phy = { .if_name = "eth0", .addr = 1, .id = MXL86110_PHY_ID_1, .mode = "rgmii" }},
 		/* last entry */
 		{ .phy = { .if_name = NULL }},
 	},
