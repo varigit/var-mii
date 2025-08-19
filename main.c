@@ -12,6 +12,7 @@
 #include "phylib_uart.h"
 #include "phy_adin1300.h"
 #include "phy_ar803x.h"
+#include "phy_dp83867.h"
 #include "phy_ksz9031.h"
 #include "phy_mxl86110.h"
 
@@ -516,6 +517,11 @@ static int var_verify_phys() {
 				if (ar803x_verify_vddio(&phy_config.phy, phy_config.ar803_vddio)) {
 					continue;
 				}
+				verified_phys++;
+				break;
+			case DP83867_PHY_ID_1:
+				printf("%s:\t\tPHY@%d: DP83867\n", __func__, phy_config.phy.addr);
+				/* For now, don't do any verification for DP83867. just acknowledge it was found */
 				verified_phys++;
 				break;
 			case KSZ9031_PHY_ID_1:
