@@ -52,6 +52,17 @@ machine_phyconfig_t machine_config_am62 = {
 	},
 };
 
+machine_phyconfig_t machine_config_am62p = {
+	.phy_count = 2,
+	.phy_configs = {
+		/* symphony */
+		{ .phy = { .if_name = "eth0", .addr = 4, .id = DP83867_PHY_ID_1, .mode = "rgmii" }},
+		{ .phy = { .if_name = "eth1", .addr = 5, .id = ADIN1300_PHY_ID_1, .mode = "rgmii" }},
+		/* last entry */
+		{ .phy = { .if_name = NULL }},
+	},
+};
+
 machine_phyconfig_t machine_config_imx8mp = {
 	.phy_count = 2,
 	.phy_configs = {
@@ -372,6 +383,8 @@ static machine_phyconfig_t * get_machine_phyconfig() {
 		machine_phyconfig = &machine_config_imx8qx;
 	} else if (strstr(machine, "SPEAR-MX8") || strstr(machine, "VAR-SOM-MX8")) {
 		machine_phyconfig = &machine_config_imx8qm;
+	} else if (strstr(machine, "VAR-SOM-AM62P")) {
+		machine_phyconfig = &machine_config_am62p;
 	} else if (strstr(machine, "VAR-SOM-AM62")) {
 		machine_phyconfig = &machine_config_am62;
 	} else {
