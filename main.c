@@ -445,6 +445,10 @@ static int var_init_phy_extended_registers() {
 				phy_config->phy.read_ext = mii_read_reg_ext;
 				phy_config->phy.write_ext = mii_write_reg_ext;
 				break;
+			case DP83867_PHY_ID_1:
+				phy_config->phy.read_ext = dp83867_read_reg_ext;
+				phy_config->phy.write_ext = dp83867_write_reg_ext;
+				break;
 			default:
 				phy_config->phy.read_ext = NULL;
 				phy_config->phy.write_ext = NULL;
