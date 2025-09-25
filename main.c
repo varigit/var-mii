@@ -430,18 +430,24 @@ static int var_init_phy_extended_registers() {
 			case ADIN1300_PHY_ID_1:
 				phy_config->phy.reg_extended_ptr = ADIN1300_EXT_REG_PTR;
 				phy_config->phy.reg_extended_data = ADIN1300_EXT_REG_DATA;
+				phy_config->phy.read_ext = mii_read_reg_ext;
+				phy_config->phy.write_ext = mii_write_reg_ext;
 				break;
 			case AR803x_PHY_ID_1:
 				phy_config->phy.reg_extended_ptr = AR803x_PHY_DEBUG_ADDR_REG;
 				phy_config->phy.reg_extended_data = AR803x_PHY_DEBUG_DATA_REG;
+				phy_config->phy.read_ext = mii_read_reg_ext;
+				phy_config->phy.write_ext = mii_write_reg_ext;
 				break;
 			case MXL86110_PHY_ID_1:
 				phy_config->phy.reg_extended_ptr = MXL86110_EXT_REG_PTR;
 				phy_config->phy.reg_extended_data = MXL86110_EXT_REG_DATA;
+				phy_config->phy.read_ext = mii_read_reg_ext;
+				phy_config->phy.write_ext = mii_write_reg_ext;
 				break;
 			default:
-				phy_config->phy.reg_extended_ptr = -1;
-				phy_config->phy.reg_extended_data = -1;
+				phy_config->phy.read_ext = NULL;
+				phy_config->phy.write_ext = NULL;
 				printf("default\n");
 		}
 	}
@@ -672,7 +678,7 @@ int main(int argc, char *argv[])
 			if (mii_write_reg(&phy, phy_reg, phy_val))
 				return RET_IO_ERR;
 		} else {
-			if (mii_write_reg_ext(&phy, phy_reg, phy_val))
+			if (phy.write_ext(&phy, phy_reg, phy_val))
 				return RET_IO_ERR;
 		}
 	}
@@ -682,7 +688,7 @@ int main(int argc, char *argv[])
 			if (mii_read_reg(&phy, phy_reg, &phy_val))
 				return RET_IO_ERR;
 		} else {
-			if (mii_read_reg_ext(&phy, phy_reg, &phy_val))
+			if (phy.read_ext(&phy, phy_reg, &phy_val))
 				return RET_IO_ERR;
 		}
 		printf("%x\n", phy_val);

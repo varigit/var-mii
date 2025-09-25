@@ -7,7 +7,12 @@
 
 #define BIT(nr)                 (1UL << (nr))
 
-typedef struct {
+struct phy;
+
+typedef int (*read_ext_fn)(const struct phy * phy, const int phy_reg, __u16  * value);
+typedef int (*write_ext_fn)(const struct phy * phy, const int phy_reg, const __u16 phy_val);
+
+typedef struct phy {
 	const char * if_name;
 	uint8_t addr;
 	uint32_t id; /* the target id used to match the correct phy_config*/
@@ -15,6 +20,8 @@ typedef struct {
 	const char * mode;
 	int reg_extended_ptr;
 	int reg_extended_data;
+	read_ext_fn read_ext;
+	write_ext_fn write_ext;
 } phy_t;
 
 int mii_read_reg(const phy_t * phy, const int phy_reg, __u16 * value);
