@@ -46,3 +46,21 @@ int dp83867_write_reg_ext(const phy_t * phy, const int phy_reg, const __u16 phy_
 	return mii_write_reg(phy, REG_ADDAR, phy_val);
 }
 
+int dp83867_verify_io_impedance(const phy_t * phy) {
+	__u16 value;
+	int ret = 0;
+
+	value = dp83867_read_reg_ext(phy, REG_IOMUX_CFG, &value);
+	dp83867_read_reg_ext(phy, REG_IOMUX_CFG, &value);
+	value = value & IOMUX_CFG_IMP_MASK;
+	if (value != IOMUX_CFG_MIN_IMP) {
+		printf("%s:\tError: Impedance Control for MAC I/O not at minimum val, but at %x\n",
+				__func__, value);
+		ret = -1;
+	} else {
+		printf("%s:\tPASS: Impedance Control is at minimum value\n", __func__);
+	}
+
+	return ret;
+}
+

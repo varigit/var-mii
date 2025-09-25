@@ -544,7 +544,9 @@ static int var_verify_phys() {
 				break;
 			case DP83867_PHY_ID_1:
 				printf("%s:\t\tPHY@%d: DP83867\n", __func__, phy_config.phy.addr);
-				/* For now, don't do any verification for DP83867. just acknowledge it was found */
+				if (dp83867_verify_io_impedance(&phy_config.phy)) {
+					continue;
+				}
 				verified_phys++;
 				break;
 			case KSZ9031_PHY_ID_1:
