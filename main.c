@@ -22,10 +22,10 @@
 
 
 #if defined(DEBUG) && DEBUG > 0
- #define DEBUG_PRINT(fmt, args...) fprintf(stderr, "DEBUG: %s:%d:%s(): " fmt, \
-    __FILE__, __LINE__, __func__, ##args)
+#define DEBUG_PRINT(fmt, args...) fprintf(stderr, "DEBUG: %s:%d:%s(): " fmt, \
+	__FILE__, __LINE__, __func__, ##args)
 #else
- #define DEBUG_PRINT(fmt, args...) /* Don't do anything in release builds */
+#define DEBUG_PRINT(fmt, args...) /* Don't do anything in release builds */
 #endif
 
 typedef struct {
@@ -113,19 +113,19 @@ machine_phyconfig_t machine_config_imx8mn = {
 };
 
 machine_phyconfig_t machine_config_imx91 = {
-        .phy_count = 2,
-        .phy_configs = {
-                /* symphony */
-                { .phy = { .if_name = "eth0", .addr = 0, .id = MXL86110_PHY_ID_1, .mode = "rgmii" }},
-                { .phy = { .if_name = "eth1", .addr = 5, .id = ADIN1300_PHY_ID_1, .mode = "rgmii" }},
-                { .phy = { .if_name = "eth1", .addr = 5, .id = AR803x_PHY_ID_1,   .mode = "rgmii" }, .ar803_vddio = AT803X_VDDIO_1P8V },
-                /* dt8mcustomboard */
-                { .phy = { .if_name = "eth1", .addr = 1, .id = ADIN1300_PHY_ID_1, .mode = "rgmii" }},
-                /* sonata */
-                { .phy = { .if_name = "eth1", .addr = 1, .id = MXL86110_PHY_ID_1, .mode = "rgmii" }},
-                /* last entry */
-                { .phy = { .if_name = NULL }},
-        },
+	.phy_count = 2,
+	.phy_configs = {
+		/* symphony */
+		{ .phy = { .if_name = "eth0", .addr = 0, .id = MXL86110_PHY_ID_1, .mode = "rgmii" }},
+		{ .phy = { .if_name = "eth1", .addr = 5, .id = ADIN1300_PHY_ID_1, .mode = "rgmii" }},
+		{ .phy = { .if_name = "eth1", .addr = 5, .id = AR803x_PHY_ID_1,   .mode = "rgmii" }, .ar803_vddio = AT803X_VDDIO_1P8V },
+		/* dt8mcustomboard */
+		{ .phy = { .if_name = "eth1", .addr = 1, .id = ADIN1300_PHY_ID_1, .mode = "rgmii" }},
+		/* sonata */
+		{ .phy = { .if_name = "eth1", .addr = 1, .id = MXL86110_PHY_ID_1, .mode = "rgmii" }},
+		/* last entry */
+		{ .phy = { .if_name = NULL }},
+	},
 };
 
 machine_phyconfig_t machine_config_imx93 = {
