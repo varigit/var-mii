@@ -1,0 +1,20 @@
+cc_binary {
+    name: "var-mii",
+
+    srcs: [
+        "main.c",
+        "phy_adin1300.c",
+        "phy_ar803x.c",
+        "phylib.c",
+        "phylib_uart.c",
+        "phy_mxl86110.c",
+        "phy_dp83867.c",
+    ],
+
+    cflags: [
+        "-Wall",
+    ],
+
+    vendor: true,
+}
+
