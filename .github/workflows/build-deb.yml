@@ -1,0 +1,75 @@
+name: Build Debian Package
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  # Build var-mii in a Debian container for every push or manual run
+  build:
+    runs-on: linux-arm64
+    container:
+      image: debian:${{ matrix.deb_dist }}
+      options: --user root
+    strategy:
+      fail-fast: false
+      matrix:
+        deb_dist:
+          - bookworm
+        deb_arch:
+          - arm64
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install build dependencies
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends \
+            ca-certificates \
+            git \
+            build-essential \
+            make \
+            gcc \
+            binutils \
+            devscripts \
+            debhelper \
+            fakeroot \
+            lintian \
+            gcc-aarch64-linux-gnu \
+            binutils-aarch64-linux-gnu
+
+      - name: Generate changelog entry
+        run: scripts/gen-deb-changelog.sh "${{ matrix.deb_dist }}"
+
+      - name: Build Debian package
+        env:
+          DEB_BUILD_OPTIONS: parallel=$(nproc)
+        run: |
+          dpkg-buildpackage -us -uc -b -aarm64
+
+      - name: Collect build artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          ARTIFACT_DIR=build-artifacts
+          mkdir -p "${ARTIFACT_DIR}"
+          shopt -s nullglob
+          files=(../*.deb ../*.buildinfo ../*.changes)
+          if [[ ${#files[@]} -eq 0 ]]; then
+            echo "No build artifacts produced." >&2
+            exit 1
+          fi
+          mv "${files[@]}" "${ARTIFACT_DIR}/"
+
+      - name: Upload package artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: var-mii-${{ github.sha }}-${{ matrix.deb_dist }}-${{ matrix.deb_arch }}
+          path: build-artifacts/
+          if-no-files-found: error
+          retention-days: 1

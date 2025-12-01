@@ -1,0 +1,20 @@
+#!/usr/bin/make -f
+
+export DEB_BUILD_MAINT_OPTIONS = hardening=+all
+
+%:
+	dh $@
+
+override_dh_auto_configure:
+	# No configure step required
+
+override_dh_auto_build:
+ifeq ($(DEB_HOST_ARCH),arm64)
+	$(MAKE) CC=aarch64-linux-gnu-gcc
+else
+	$(MAKE)
+endif
+
+override_dh_auto_install:
+	install -d $(CURDIR)/debian/var-mii/usr/bin
+	install -m 0755 var-mii $(CURDIR)/debian/var-mii/usr/bin
