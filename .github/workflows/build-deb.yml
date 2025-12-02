@@ -73,3 +73,108 @@ jobs:
           path: build-artifacts/
           if-no-files-found: error
           retention-days: 1
+
+  # Publish the newly built package to var-debpkgs after master pushes or manual runs
+  publish:
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        include:
+          - deb_dist: bookworm
+            deb_arch: arm64
+            target_ppa: var
+    env:
+      TARGET_REPO: varigit-dev/var-debpkgs
+    steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          pattern: var-mii-${{ github.sha }}-${{ matrix.deb_dist }}-${{ matrix.deb_arch }}
+          merge-multiple: false
+
+      - name: Debug downloaded artifacts
+        run: |
+          echo "Contents of ./dist after download:"
+          if ! ls -R dist; then
+            echo "dist directory missing!" >&2
+            exit 1
+          fi
+
+      - name: Install repository tooling
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y dpkg-dev apt-utils git
+
+      - name: Checkout var-debpkgs
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.TARGET_REPO }}
+          token: ${{ secrets.VARISCITE_BOT_TOKEN }}
+          path: var-debpkgs
+          ref: master
+
+      - name: Copy package into repo
+        id: copy_pkg
+        shell: bash
+        working-directory: var-debpkgs
+        run: |
+          set -euo pipefail
+          shopt -s nullglob globstar
+          debs=(../dist/**/*var-mii_*.deb)
+          if [[ ${#debs[@]} -ne 1 ]]; then
+            echo "Expected exactly one var-mii_*.deb artifact, found ${#debs[@]}." >&2
+            printf '  %s\n' "${debs[@]:-<none>}"
+            exit 1
+          fi
+          deb_file="${debs[0]}"
+          target_dir="${{ matrix.target_ppa }}/pool/${{ matrix.deb_dist }}"
+          mkdir -p "${target_dir}"
+          version="$(dpkg-deb --field "${deb_file}" Version)"
+          cp "${deb_file}" "${target_dir}/"
+          echo "Copied ${deb_file} (version ${version}) -> ${target_dir}"
+          echo "version=${version}" >> "${GITHUB_OUTPUT}"
+
+      - name: Update PPA metadata
+        working-directory: var-debpkgs
+        run: |
+          ./update-ppa.sh
+
+      - name: Commit and push changes
+        id: commit_push
+        shell: bash
+        working-directory: var-debpkgs
+        run: |
+          set -euo pipefail
+          git config user.name "Var Bot"
+          git config user.email "varibot@variscite.com"
+          if git diff --quiet; then
+            echo "No changes after update-ppa.sh; skipping PR."
+            echo "changed=false" >> "${GITHUB_OUTPUT}"
+            exit 0
+          fi
+          BRANCH_NAME="ci/var-mii-${{ github.run_id }}-${{ matrix.deb_dist }}-${{ matrix.deb_arch }}"
+          VERSION="${{ steps.copy_pkg.outputs.version }}"
+          git switch -c "${BRANCH_NAME}"
+          git add .
+          git commit -m "var-mii: update to ${VERSION}"
+          git push -u origin "${BRANCH_NAME}"
+          echo "branch=${BRANCH_NAME}" >> "${GITHUB_OUTPUT}"
+          echo "changed=true" >> "${GITHUB_OUTPUT}"
+
+      - name: Open pull request
+        if: steps.commit_push.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.VARISCITE_BOT_TOKEN }}
+        run: |
+          gh pr create \
+            --repo "${{ env.TARGET_REPO }}" \
+            --head "${{ steps.commit_push.outputs.branch }}" \
+            --base master \
+            --title "var-mii (${{ matrix.deb_dist }}) update to ${{ steps.copy_pkg.outputs.version }}" \
+            --body "Automated update for suite \`${{ matrix.deb_dist }}\` (arch \`${{ matrix.deb_arch }}\`) triggered by var-mii commit ${{ github.sha }}." \
+            --label "sync-to-varigit"
