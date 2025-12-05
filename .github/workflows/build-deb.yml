@@ -77,7 +77,7 @@ jobs:
   # Publish the newly built package to var-debpkgs after master pushes or manual runs
   publish:
     needs: build
-    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/master') || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
