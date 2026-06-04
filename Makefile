@@ -1,6 +1,6 @@
 CC ?= gcc
-CFLAGS = -Wall
-LDFLAGS =
+CFLAGS ?= -Wall
+LDFLAGS ?=
 OBJFILES = main.o phy_adin1300.o phy_ar803x.o phy_mxl86110.o phylib.o phylib_uart.o
 OBJFILES = main.o phy_adin1300.o phy_ar803x.o phy_mxl86110.o phylib.o phylib_uart.o phy_dp83867.o
 TARGET = var-mii
