@@ -47,6 +47,7 @@ machine_phyconfig_t machine_config_am62 = {
 		/* symphony */
 		{ .phy = { .if_name = "eth0", .addr = 4, .id = ADIN1300_PHY_ID_1, .mode = "rgmii" }},
 		{ .phy = { .if_name = "eth1", .addr = 5, .id = ADIN1300_PHY_ID_1, .mode = "rgmii" }},
+		{ .phy = { .if_name = "eth1", .addr = 5, .id = DP83867_PHY_ID_1, .mode = "rgmii" }},
 		/* last entry */
 		{ .phy = { .if_name = NULL }},
 	},
@@ -58,6 +59,7 @@ machine_phyconfig_t machine_config_am62p = {
 		/* symphony */
 		{ .phy = { .if_name = "eth0", .addr = 4, .id = DP83867_PHY_ID_1, .mode = "rgmii" }},
 		{ .phy = { .if_name = "eth1", .addr = 5, .id = ADIN1300_PHY_ID_1, .mode = "rgmii" }},
+		{ .phy = { .if_name = "eth1", .addr = 5, .id = DP83867_PHY_ID_1, .mode = "rgmii" }},
 		/* last entry */
 		{ .phy = { .if_name = NULL }},
 	},
@@ -82,7 +84,7 @@ machine_phyconfig_t machine_config_imx8mp = {
 		{ .phy = { .if_name = "eth1", .addr = 5, .id = AR803x_PHY_ID_1,   .mode = "rgmii" }, .ar803_vddio = AT803X_VDDIO_1P8V },
 		/* echo */
 		{ .phy = { .if_name = "eth0", .addr = 4, .id = DP83867_PHY_ID_1, .mode = "rgmii" }},
-		{ .phy = { .if_name = "eth1", .addr = 5, .id = DP83867_PHY_ID_1, .mode = "rgmii" }},
+		{ .phy = { .if_name = "eth1", .addr = 5, .id = DP83867_PHY_ID_1, .mode = "rgmii" }},	/* also used by Symphony v2.1+ */
 		/* last entry */
 		{ .phy = { .if_name = NULL }},
 	},
@@ -124,6 +126,7 @@ machine_phyconfig_t machine_config_imx91 = {
 		{ .phy = { .if_name = "eth1", .addr = 5, .id = ADIN1300_PHY_ID_1, .mode = "rgmii" }},
 		{ .phy = { .if_name = "eth1", .addr = 5, .id = AR803x_PHY_ID_1,   .mode = "rgmii" }, .ar803_vddio = AT803X_VDDIO_1P8V },
 		{ .phy = { .if_name = "eth1", .addr = 5, .id = MXL86110_PHY_ID_1, .mode = "rgmii" }},
+		{ .phy = { .if_name = "eth1", .addr = 5, .id = DP83867_PHY_ID_1, .mode = "rgmii" }},
 		/* dt8mcustomboard */
 		{ .phy = { .if_name = "eth1", .addr = 1, .id = ADIN1300_PHY_ID_1, .mode = "rgmii" }},
 		/* sonata */
@@ -143,6 +146,7 @@ machine_phyconfig_t machine_config_imx93 = {
 		{ .phy = { .if_name = "eth1", .addr = 5, .id = MXL86110_PHY_ID_1, .mode = "rgmii" }},
 		{ .phy = { .if_name = "eth0", .addr = 0, .id = AR803x_PHY_ID_1,   .mode = "rgmii" }, .ar803_vddio = AT803X_VDDIO_1P8V },
 		{ .phy = { .if_name = "eth1", .addr = 5, .id = AR803x_PHY_ID_1,   .mode = "rgmii" }, .ar803_vddio = AT803X_VDDIO_1P8V },
+		{ .phy = { .if_name = "eth1", .addr = 5, .id = DP83867_PHY_ID_1, .mode = "rgmii" }},
 		/* dt8mcustomboard */
 		{ .phy = { .if_name = "eth1", .addr = 1, .id = ADIN1300_PHY_ID_1, .mode = "rgmii" }},
 		/* sonata */
@@ -206,6 +210,7 @@ machine_phyconfig_t machine_config_imx8qx = {
 		{ .phy = { .if_name = "eth1", .addr = 5, .id = MXL86110_PHY_ID_1, .mode = "rgmii" }},
 		{ .phy = { .if_name = "eth0", .addr = 4, .id = AR803x_PHY_ID_1,   .mode = "rgmii" }, .ar803_vddio = AT803X_VDDIO_1P8V },
 		{ .phy = { .if_name = "eth1", .addr = 5, .id = AR803x_PHY_ID_1,   .mode = "rgmii-rxid" }, .ar803_vddio = AT803X_VDDIO_1P8V },
+		{ .phy = { .if_name = "eth1", .addr = 5, .id = DP83867_PHY_ID_1, .mode = "rgmii" }},
 		/* last entry */
 		{ .phy = { .if_name = NULL }},
 	},
@@ -225,6 +230,7 @@ machine_phyconfig_t machine_config_imx8qm = {
 		{ .phy = { .if_name = "eth1", .addr = 5, .id = ADIN1300_PHY_ID_1, .mode = "rgmii" }},
 		{ .phy = { .if_name = "eth0", .addr = 4, .id = AR803x_PHY_ID_1,   .mode = "rgmii" }, .ar803_vddio = AT803X_VDDIO_1P8V },
 		{ .phy = { .if_name = "eth1", .addr = 5, .id = AR803x_PHY_ID_1,   .mode = "rgmii-rxid" }, .ar803_vddio = AT803X_VDDIO_1P8V },
+		{ .phy = { .if_name = "eth1", .addr = 5, .id = DP83867_PHY_ID_1, .mode = "rgmii" }},
 		/* last entry */
 		{ .phy = { .if_name = NULL }},
 	},
