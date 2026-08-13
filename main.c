@@ -163,6 +163,7 @@ machine_phyconfig_t machine_config_imx95 = {
 		{ .phy = { .if_name = "eth0", .addr = 0, .id = MXL86110_PHY_ID_1, .mode = "rgmii" }},
 		{ .phy = { .if_name = "eth1", .addr = 1, .id = ADIN1300_PHY_ID_1, .mode = "rgmii" }},
 		{ .phy = { .if_name = "eth1", .addr = 1, .id = MXL86110_PHY_ID_1, .mode = "rgmii" }},
+		{ .phy = { .if_name = "eth0", .addr = 4, .id = DP83867_PHY_ID_1, .mode = "rgmii" }},
 		/* last entry */
 		{ .phy = { .if_name = NULL }},
 	},
