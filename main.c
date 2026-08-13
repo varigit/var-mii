@@ -558,6 +558,9 @@ static int var_verify_phys() {
 				break;
 			case DP83867_PHY_ID_1:
 				printf("%s:\t\tPHY@%d: DP83867\n", __func__, phy_config.phy.addr);
+				if (dp83867_verify_phy_mode(&phy_config.phy, phy_config.phy.mode)) {
+					continue;
+				}
 				if (dp83867_verify_io_impedance(&phy_config.phy)) {
 					continue;
 				}

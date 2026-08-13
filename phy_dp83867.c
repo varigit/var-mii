@@ -21,6 +21,12 @@
 #define IOMUX_CFG_MIN_IMP       0x1f        /* all bits set -> minimum impedance */
 #define IOMUX_CFG_MAX_IMP       0x00        /* no  bit set  -> maximum impedance */
 
+/* RGMII register */
+#define DP83867_RGMIICTL                0x0032
+#define DP83867_RGMII_EN                BIT(7)
+#define DP83867_RGMII_TX_CLK_DELAY_EN   BIT(1)
+#define DP83867_RGMII_RX_CLK_DELAY_EN   BIT(0)
+
 /* For more details, please see DP83867 datasheet at https://www.ti.com/lit/ds/symlink/dp83867ir.pdf */
 
 
@@ -44,6 +50,48 @@ int dp83867_write_reg_ext(const phy_t * phy, const int phy_reg, const __u16 phy_
 	mii_write_reg(phy, REG_ADDAR, phy_reg);
 	mii_write_reg(phy, REG_REGCR, ADDAR_DATA_NO_INC | DP83867_DEVAD);
 	return mii_write_reg(phy, REG_ADDAR, phy_val);
+}
+
+int dp83867_verify_phy_mode(const phy_t * phy, const char * mode) {
+	__u16 value;
+	int ret;
+
+	/* read RGMIICTL register */
+	ret = dp83867_read_reg_ext(phy, DP83867_RGMIICTL, &value);
+	if (ret) {
+		printf("%s:\tError: failed to read DP83867_RGMIICTL (%d)\n",
+				__func__, ret);
+		return ret;
+	}
+
+	ret = 0;
+
+	if (!(value & DP83867_RGMII_EN)) {
+		printf("%s:\tError: DP83867_RGMII_EN is disabled\n", __func__);
+		ret = -1;
+	}
+
+	if (strcmp(mode, "rgmii") == 0) {
+		if ((value & DP83867_RGMII_TX_CLK_DELAY_EN)) {
+			printf("%s:\tError: DP83867_RGMII_TX_CLK_DELAY_EN is enabled\n", __func__);
+			ret = -1;
+		}
+		if ((value & DP83867_RGMII_RX_CLK_DELAY_EN)) {
+			printf("%s:\tError: DP83867_RGMII_RX_CLK_DELAY_EN is enabled\n", __func__);
+			ret = -1;
+		}
+	} else {
+		printf("%s:\tError: unknown phy mode '%s'\n", __func__, mode);
+		ret = -1;
+	}
+
+	if (!ret) {
+		printf("%s:\tPASS: RGMII Mode = '%s' \n", __func__, mode);
+	} else {
+		printf("%s:\tFAIL: RGMII Mode != '%s' \n", __func__, mode);
+	}
+
+	return ret;
 }
 
 int dp83867_verify_io_impedance(const phy_t * phy) {
