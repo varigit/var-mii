@@ -16,6 +16,7 @@ jobs:
       matrix:
         deb_dist:
           - bookworm
+          - trixie
         deb_arch:
           - arm64
     steps:
@@ -87,6 +88,10 @@ jobs:
           - deb_dist: bookworm
             deb_arch: arm64
             target_ppa: var
+          - deb_dist: trixie
+            deb_arch: arm64
+            target_ppa: var
+
     env:
       TARGET_REPO: varigit-dev/var-debpkgs
     steps:
