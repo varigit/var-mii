@@ -672,7 +672,7 @@ int main(int argc, char *argv[])
 	}
 
 	if (var_init_phys()) {
-		printf("Failed to int phys\n");
+		printf("Failed to init phys\n");
 		return RET_ERROR;
 	}
 
