@@ -56,9 +56,7 @@ jobs:
             devscripts \
             debhelper \
             fakeroot \
-            lintian \
-            gcc-aarch64-linux-gnu \
-            binutils-aarch64-linux-gnu
+            lintian
 
       - name: Generate changelog entry
         run: scripts/gen-deb-changelog.sh "${{ matrix.deb_dist }}"
