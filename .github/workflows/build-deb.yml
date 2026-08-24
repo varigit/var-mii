@@ -64,10 +64,9 @@ jobs:
         run: scripts/gen-deb-changelog.sh "${{ matrix.deb_dist }}"
 
       - name: Build Debian package
-        env:
-          DEB_BUILD_OPTIONS: parallel=$(nproc)
         run: |
-          dpkg-buildpackage -us -uc -b -aarm64
+          DEB_BUILD_OPTIONS="parallel=$(nproc)" \
+            dpkg-buildpackage -us -uc -b -aarm64
 
       - name: Collect build artifacts
         shell: bash
