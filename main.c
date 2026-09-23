@@ -1,5 +1,6 @@
 #include <linux/types.h>
 #include <linux/mii.h>
+#include <net/if.h>
 #include <stdint.h>
 #include <string.h>
 #include <stdio.h>
@@ -8,6 +9,9 @@
 #include <unistd.h>
 #include <termios.h>
 #include <ctype.h>
+#include <errno.h>
+#include <dirent.h>
+#include <limits.h>
 #include "phylib.h"
 #include "phylib_uart.h"
 #include "phy_adin1300.h"
@@ -20,6 +24,7 @@
 #define RET_UNKNOWN_PHY -3
 #define RET_ERROR -3
 
+#define INVALID_ADDRESS 255  /* MDIO addresses range from 0..31 */
 
 #if defined(DEBUG) && DEBUG > 0
 #define DEBUG_PRINT(fmt, args...) fprintf(stderr, "DEBUG: %s:%d:%s(): " fmt, \
@@ -30,6 +35,7 @@
 
 typedef struct {
 	phy_t phy;
+	char if_name[IFNAMSIZ];
 	uint8_t adin1300_rx_delay;          /* relevant only for rgmii-id, rgmii-rxid */
 	uint8_t adin1300_tx_delay;          /* relevant only for rgmii-id, rgmii-txid */
 	uint8_t clk_rcvr_125_en;            /* default = 0 = disabled */
@@ -45,11 +51,11 @@ machine_phyconfig_t machine_config_am62 = {
 	.phy_count = 2,
 	.phy_configs = {
 		/* symphony */
-		{ .phy = { .if_name = "eth0", .addr = 4, .id = ADIN1300_PHY_ID_1, .mode = "rgmii" }},
-		{ .phy = { .if_name = "eth1", .addr = 5, .id = ADIN1300_PHY_ID_1, .mode = "rgmii" }},
-		{ .phy = { .if_name = "eth1", .addr = 5, .id = DP83867_PHY_ID_1, .mode = "rgmii" }},
+		{ .phy = { .addr = 4, .id = ADIN1300_PHY_ID_1, .mode = "rgmii" }},
+		{ .phy = { .addr = 5, .id = ADIN1300_PHY_ID_1, .mode = "rgmii" }},
+		{ .phy = { .addr = 5, .id = DP83867_PHY_ID_1, .mode = "rgmii" }},
 		/* last entry */
-		{ .phy = { .if_name = NULL }},
+		{ .phy = { .addr = INVALID_ADDRESS }},
 	},
 };
 
@@ -57,11 +63,11 @@ machine_phyconfig_t machine_config_am62p = {
 	.phy_count = 2,
 	.phy_configs = {
 		/* symphony */
-		{ .phy = { .if_name = "eth0", .addr = 4, .id = DP83867_PHY_ID_1, .mode = "rgmii" }},
-		{ .phy = { .if_name = "eth1", .addr = 5, .id = ADIN1300_PHY_ID_1, .mode = "rgmii" }},
-		{ .phy = { .if_name = "eth1", .addr = 5, .id = DP83867_PHY_ID_1, .mode = "rgmii" }},
+		{ .phy = { .addr = 4, .id = DP83867_PHY_ID_1, .mode = "rgmii" }},
+		{ .phy = { .addr = 5, .id = ADIN1300_PHY_ID_1, .mode = "rgmii" }},
+		{ .phy = { .addr = 5, .id = DP83867_PHY_ID_1, .mode = "rgmii" }},
 		/* last entry */
-		{ .phy = { .if_name = NULL }},
+		{ .phy = { .addr = INVALID_ADDRESS }},
 	},
 };
 
@@ -69,24 +75,24 @@ machine_phyconfig_t machine_config_imx8mp = {
 	.phy_count = 2,
 	.phy_configs = {
 		/* dt8mcustomboard */
-		{ .phy = { .if_name = "eth0", .addr = 0, .id = MXL86110_PHY_ID_1, .mode = "rgmii" }},
-		{ .phy = { .if_name = "eth1", .addr = 1, .id = MXL86110_PHY_ID_1, .mode = "rgmii" }},
-		{ .phy = { .if_name = "eth0", .addr = 0, .id = ADIN1300_PHY_ID_1, .mode = "rgmii" }},
-		{ .phy = { .if_name = "eth1", .addr = 1, .id = ADIN1300_PHY_ID_1, .mode = "rgmii" }},
-		{ .phy = { .if_name = "eth0", .addr = 0, .id = AR803x_PHY_ID_1,   .mode = "rgmii" }, .ar803_vddio = AT803X_VDDIO_1P8V },
-		{ .phy = { .if_name = "eth1", .addr = 1, .id = AR803x_PHY_ID_1,   .mode = "rgmii" }, .ar803_vddio = AT803X_VDDIO_1P8V },
+		{ .phy = { .addr = 0, .id = MXL86110_PHY_ID_1, .mode = "rgmii" }},
+		{ .phy = { .addr = 1, .id = MXL86110_PHY_ID_1, .mode = "rgmii" }},
+		{ .phy = { .addr = 0, .id = ADIN1300_PHY_ID_1, .mode = "rgmii" }},
+		{ .phy = { .addr = 1, .id = ADIN1300_PHY_ID_1, .mode = "rgmii" }},
+		{ .phy = { .addr = 0, .id = AR803x_PHY_ID_1,   .mode = "rgmii" }, .ar803_vddio = AT803X_VDDIO_1P8V },
+		{ .phy = { .addr = 1, .id = AR803x_PHY_ID_1,   .mode = "rgmii" }, .ar803_vddio = AT803X_VDDIO_1P8V },
 		/* symphony */
-		{ .phy = { .if_name = "eth0", .addr = 4, .id = MXL86110_PHY_ID_1, .mode = "rgmii" }},
-		{ .phy = { .if_name = "eth1", .addr = 5, .id = MXL86110_PHY_ID_1, .mode = "rgmii" }},
-		{ .phy = { .if_name = "eth0", .addr = 4, .id = ADIN1300_PHY_ID_1, .mode = "rgmii" }},
-		{ .phy = { .if_name = "eth1", .addr = 5, .id = ADIN1300_PHY_ID_1, .mode = "rgmii" }},
-		{ .phy = { .if_name = "eth0", .addr = 4, .id = AR803x_PHY_ID_1,   .mode = "rgmii" }, .ar803_vddio = AT803X_VDDIO_1P8V },
-		{ .phy = { .if_name = "eth1", .addr = 5, .id = AR803x_PHY_ID_1,   .mode = "rgmii" }, .ar803_vddio = AT803X_VDDIO_1P8V },
+		{ .phy = { .addr = 4, .id = MXL86110_PHY_ID_1, .mode = "rgmii" }},
+		{ .phy = { .addr = 5, .id = MXL86110_PHY_ID_1, .mode = "rgmii" }},
+		{ .phy = { .addr = 4, .id = ADIN1300_PHY_ID_1, .mode = "rgmii" }},
+		{ .phy = { .addr = 5, .id = ADIN1300_PHY_ID_1, .mode = "rgmii" }},
+		{ .phy = { .addr = 4, .id = AR803x_PHY_ID_1,   .mode = "rgmii" }, .ar803_vddio = AT803X_VDDIO_1P8V },
+		{ .phy = { .addr = 5, .id = AR803x_PHY_ID_1,   .mode = "rgmii" }, .ar803_vddio = AT803X_VDDIO_1P8V },
 		/* echo */
-		{ .phy = { .if_name = "eth0", .addr = 4, .id = DP83867_PHY_ID_1, .mode = "rgmii" }},
-		{ .phy = { .if_name = "eth1", .addr = 5, .id = DP83867_PHY_ID_1, .mode = "rgmii" }},	/* also used by Symphony v2.1+ */
+		{ .phy = { .addr = 4, .id = DP83867_PHY_ID_1, .mode = "rgmii" }},
+		{ .phy = { .addr = 5, .id = DP83867_PHY_ID_1, .mode = "rgmii" }},	/* also used by Symphony v2.1+ */
 		/* last entry */
-		{ .phy = { .if_name = NULL }},
+		{ .phy = { .addr = INVALID_ADDRESS }},
 	},
 };
 
@@ -94,15 +100,15 @@ machine_phyconfig_t machine_config_imx8mm = {
 	.phy_count = 1,
 	.phy_configs = {
 		/* dt8mcustomboard */
-		{ .phy = { .if_name = "eth0", .addr = 0, .id = ADIN1300_PHY_ID_1, .mode = "rgmii" }},
-		{ .phy = { .if_name = "eth0", .addr = 0, .id = AR803x_PHY_ID_1,   .mode = "rgmii" }, .ar803_vddio = AT803X_VDDIO_1P8V },
-		{ .phy = { .if_name = "eth0", .addr = 0, .id = MXL86110_PHY_ID_1, .mode = "rgmii" }},
+		{ .phy = { .addr = 0, .id = ADIN1300_PHY_ID_1, .mode = "rgmii" }},
+		{ .phy = { .addr = 0, .id = AR803x_PHY_ID_1,   .mode = "rgmii" }, .ar803_vddio = AT803X_VDDIO_1P8V },
+		{ .phy = { .addr = 0, .id = MXL86110_PHY_ID_1, .mode = "rgmii" }},
 		/* symphony */
-		{ .phy = { .if_name = "eth0", .addr = 4, .id = ADIN1300_PHY_ID_1, .mode = "rgmii" }},
-		{ .phy = { .if_name = "eth0", .addr = 4, .id = AR803x_PHY_ID_1,   .mode = "rgmii" }, .ar803_vddio = AT803X_VDDIO_1P8V },
-		{ .phy = { .if_name = "eth0", .addr = 4, .id = MXL86110_PHY_ID_1, .mode = "rgmii" }},
+		{ .phy = { .addr = 4, .id = ADIN1300_PHY_ID_1, .mode = "rgmii" }},
+		{ .phy = { .addr = 4, .id = AR803x_PHY_ID_1,   .mode = "rgmii" }, .ar803_vddio = AT803X_VDDIO_1P8V },
+		{ .phy = { .addr = 4, .id = MXL86110_PHY_ID_1, .mode = "rgmii" }},
 		/* last entry */
-		{ .phy = { .if_name = NULL }},
+		{ .phy = { .addr = INVALID_ADDRESS }},
 	},
 };
 
@@ -110,11 +116,11 @@ machine_phyconfig_t machine_config_imx8mn = {
 	.phy_count = 1,
 	.phy_configs = {
 		/* symphony */
-		{ .phy = { .if_name = "eth0", .addr = 4, .id = ADIN1300_PHY_ID_1, .mode = "rgmii" }},
-		{ .phy = { .if_name = "eth0", .addr = 4, .id = AR803x_PHY_ID_1,   .mode = "rgmii" }, .ar803_vddio = AT803X_VDDIO_1P8V },
-		{ .phy = { .if_name = "eth0", .addr = 4, .id = MXL86110_PHY_ID_1, .mode = "rgmii" }},
+		{ .phy = { .addr = 4, .id = ADIN1300_PHY_ID_1, .mode = "rgmii" }},
+		{ .phy = { .addr = 4, .id = AR803x_PHY_ID_1,   .mode = "rgmii" }, .ar803_vddio = AT803X_VDDIO_1P8V },
+		{ .phy = { .addr = 4, .id = MXL86110_PHY_ID_1, .mode = "rgmii" }},
 		/* last entry */
-		{ .phy = { .if_name = NULL }},
+		{ .phy = { .addr = INVALID_ADDRESS }},
 	},
 };
 
@@ -122,17 +128,17 @@ machine_phyconfig_t machine_config_imx91 = {
 	.phy_count = 2,
 	.phy_configs = {
 		/* symphony */
-		{ .phy = { .if_name = "eth0", .addr = 0, .id = MXL86110_PHY_ID_1, .mode = "rgmii" }},
-		{ .phy = { .if_name = "eth1", .addr = 5, .id = ADIN1300_PHY_ID_1, .mode = "rgmii" }},
-		{ .phy = { .if_name = "eth1", .addr = 5, .id = AR803x_PHY_ID_1,   .mode = "rgmii" }, .ar803_vddio = AT803X_VDDIO_1P8V },
-		{ .phy = { .if_name = "eth1", .addr = 5, .id = MXL86110_PHY_ID_1, .mode = "rgmii" }},
-		{ .phy = { .if_name = "eth1", .addr = 5, .id = DP83867_PHY_ID_1, .mode = "rgmii" }},
+		{ .phy = { .addr = 0, .id = MXL86110_PHY_ID_1, .mode = "rgmii" }},
+		{ .phy = { .addr = 5, .id = ADIN1300_PHY_ID_1, .mode = "rgmii" }},
+		{ .phy = { .addr = 5, .id = AR803x_PHY_ID_1,   .mode = "rgmii" }, .ar803_vddio = AT803X_VDDIO_1P8V },
+		{ .phy = { .addr = 5, .id = MXL86110_PHY_ID_1, .mode = "rgmii" }},
+		{ .phy = { .addr = 5, .id = DP83867_PHY_ID_1, .mode = "rgmii" }},
 		/* dt8mcustomboard */
-		{ .phy = { .if_name = "eth1", .addr = 1, .id = ADIN1300_PHY_ID_1, .mode = "rgmii" }},
+		{ .phy = { .addr = 1, .id = ADIN1300_PHY_ID_1, .mode = "rgmii" }},
 		/* sonata */
-		{ .phy = { .if_name = "eth1", .addr = 1, .id = MXL86110_PHY_ID_1, .mode = "rgmii" }},
+		{ .phy = { .addr = 1, .id = MXL86110_PHY_ID_1, .mode = "rgmii" }},
 		/* last entry */
-		{ .phy = { .if_name = NULL }},
+		{ .phy = { .addr = INVALID_ADDRESS }},
 	},
 };
 
@@ -140,19 +146,19 @@ machine_phyconfig_t machine_config_imx93 = {
 	.phy_count = 2,
 	.phy_configs = {
 		/* symphony */
-		{ .phy = { .if_name = "eth0", .addr = 0, .id = MXL86110_PHY_ID_1, .mode = "rgmii" }}, /* both imx93-var-som and imx93-var-dart */
-		{ .phy = { .if_name = "eth0", .addr = 0, .id = ADIN1300_PHY_ID_1, .mode = "rgmii" }},
-		{ .phy = { .if_name = "eth1", .addr = 5, .id = ADIN1300_PHY_ID_1, .mode = "rgmii" }},
-		{ .phy = { .if_name = "eth1", .addr = 5, .id = MXL86110_PHY_ID_1, .mode = "rgmii" }},
-		{ .phy = { .if_name = "eth0", .addr = 0, .id = AR803x_PHY_ID_1,   .mode = "rgmii" }, .ar803_vddio = AT803X_VDDIO_1P8V },
-		{ .phy = { .if_name = "eth1", .addr = 5, .id = AR803x_PHY_ID_1,   .mode = "rgmii" }, .ar803_vddio = AT803X_VDDIO_1P8V },
-		{ .phy = { .if_name = "eth1", .addr = 5, .id = DP83867_PHY_ID_1, .mode = "rgmii" }},
+		{ .phy = { .addr = 0, .id = MXL86110_PHY_ID_1, .mode = "rgmii" }}, /* both imx93-var-som and imx93-var-dart */
+		{ .phy = { .addr = 0, .id = ADIN1300_PHY_ID_1, .mode = "rgmii" }},
+		{ .phy = { .addr = 5, .id = ADIN1300_PHY_ID_1, .mode = "rgmii" }},
+		{ .phy = { .addr = 5, .id = MXL86110_PHY_ID_1, .mode = "rgmii" }},
+		{ .phy = { .addr = 0, .id = AR803x_PHY_ID_1,   .mode = "rgmii" }, .ar803_vddio = AT803X_VDDIO_1P8V },
+		{ .phy = { .addr = 5, .id = AR803x_PHY_ID_1,   .mode = "rgmii" }, .ar803_vddio = AT803X_VDDIO_1P8V },
+		{ .phy = { .addr = 5, .id = DP83867_PHY_ID_1, .mode = "rgmii" }},
 		/* dt8mcustomboard */
-		{ .phy = { .if_name = "eth1", .addr = 1, .id = ADIN1300_PHY_ID_1, .mode = "rgmii" }},
+		{ .phy = { .addr = 1, .id = ADIN1300_PHY_ID_1, .mode = "rgmii" }},
 		/* sonata */
-		{ .phy = { .if_name = "eth0", .addr = 1, .id = MXL86110_PHY_ID_1, .mode = "rgmii" }},
+		{ .phy = { .addr = 1, .id = MXL86110_PHY_ID_1, .mode = "rgmii" }},
 		/* last entry */
-		{ .phy = { .if_name = NULL }},
+		{ .phy = { .addr = INVALID_ADDRESS }},
 	},
 };
 
@@ -160,12 +166,12 @@ machine_phyconfig_t machine_config_imx95 = {
 	.phy_count = 2,
 	.phy_configs = {
 		/* dt8mcustomboard */
-		{ .phy = { .if_name = "eth0", .addr = 0, .id = MXL86110_PHY_ID_1, .mode = "rgmii" }},
-		{ .phy = { .if_name = "eth1", .addr = 1, .id = ADIN1300_PHY_ID_1, .mode = "rgmii" }},
-		{ .phy = { .if_name = "eth1", .addr = 1, .id = MXL86110_PHY_ID_1, .mode = "rgmii" }},
-		{ .phy = { .if_name = "eth0", .addr = 4, .id = DP83867_PHY_ID_1, .mode = "rgmii" }},
+		{ .phy = { .addr = 0, .id = MXL86110_PHY_ID_1, .mode = "rgmii" }},
+		{ .phy = { .addr = 1, .id = ADIN1300_PHY_ID_1, .mode = "rgmii" }},
+		{ .phy = { .addr = 1, .id = MXL86110_PHY_ID_1, .mode = "rgmii" }},
+		{ .phy = { .addr = 4, .id = DP83867_PHY_ID_1, .mode = "rgmii" }},
 		/* last entry */
-		{ .phy = { .if_name = NULL }},
+		{ .phy = { .addr = INVALID_ADDRESS }},
 	},
 };
 
@@ -173,19 +179,19 @@ machine_phyconfig_t machine_config_imx8mq = {
 	.phy_count = 1,
 	.phy_configs = {
 		/* dt8mcustomboard */
-		{ .phy = { .if_name = "eth0", .addr = 0, .id = ADIN1300_PHY_ID_1, .mode = "rgmii" }},
-		{ .phy = { .if_name = "eth0", .addr = 0, .id = AR803x_PHY_ID_1,   .mode = "rgmii" }, .ar803_vddio = AT803X_VDDIO_DONTCARE },
+		{ .phy = { .addr = 0, .id = ADIN1300_PHY_ID_1, .mode = "rgmii" }},
+		{ .phy = { .addr = 0, .id = AR803x_PHY_ID_1,   .mode = "rgmii" }, .ar803_vddio = AT803X_VDDIO_DONTCARE },
 		/* last entry */
-		{ .phy = { .if_name = NULL }},
+		{ .phy = { .addr = INVALID_ADDRESS }},
 	},
 };
 
 machine_phyconfig_t machine_config_imx6dl = {
 	.phy_count = 1,
 	.phy_configs = {
-		{ .phy = { .if_name = "eth0", .addr = 7, .id = ADIN1300_PHY_ID_1, .mode = "rgmii-id" }, .clk_rcvr_125_en = ADIN1300_GE_CLK_RCVR_125_EN },
-		{ .phy = { .if_name = "eth0", .addr = 7, .id = KSZ9031_PHY_ID_1, .mode = "rgmii" }},
-		{ .phy = { .if_name = NULL }},
+		{ .phy = { .addr = 7, .id = ADIN1300_PHY_ID_1, .mode = "rgmii-id" }, .clk_rcvr_125_en = ADIN1300_GE_CLK_RCVR_125_EN },
+		{ .phy = { .addr = 7, .id = KSZ9031_PHY_ID_1, .mode = "rgmii" }},
+		{ .phy = { .addr = INVALID_ADDRESS }},
 	},
 };
 
@@ -193,14 +199,14 @@ machine_phyconfig_t machine_config_imx7 = {
 	.phy_count = 2,
 	.phy_configs = {
 		/* mx7Customboard */
-		{ .phy = { .if_name = "eth0", .addr = 0, .id = ADIN1300_PHY_ID_1, .mode = "rgmii-rxid" }},
-		{ .phy = { .if_name = "eth1", .addr = 1, .id = ADIN1300_PHY_ID_1, .mode = "rgmii-rxid" }},
-		{ .phy = { .if_name = "eth0", .addr = 0, .id = AR803x_PHY_ID_1,   .mode = "rgmii-id" }, .ar803_vddio = AT803X_VDDIO_1P8V },
-		{ .phy = { .if_name = "eth1", .addr = 1, .id = AR803x_PHY_ID_1,   .mode = "rgmii-id" }, .ar803_vddio = AT803X_VDDIO_1P8V },
-		{ .phy = { .if_name = "eth0", .addr = 0, .id = DP83867_PHY_ID_1,  .mode = "rgmii" }},
-		{ .phy = { .if_name = "eth1", .addr = 1, .id = DP83867_PHY_ID_1,  .mode = "rgmii" }},
+		{ .phy = { .addr = 0, .id = ADIN1300_PHY_ID_1, .mode = "rgmii-rxid" }},
+		{ .phy = { .addr = 1, .id = ADIN1300_PHY_ID_1, .mode = "rgmii-rxid" }},
+		{ .phy = { .addr = 0, .id = AR803x_PHY_ID_1,   .mode = "rgmii-id" }, .ar803_vddio = AT803X_VDDIO_1P8V },
+		{ .phy = { .addr = 1, .id = AR803x_PHY_ID_1,   .mode = "rgmii-id" }, .ar803_vddio = AT803X_VDDIO_1P8V },
+		{ .phy = { .addr = 0, .id = DP83867_PHY_ID_1,  .mode = "rgmii" }},
+		{ .phy = { .addr = 1, .id = DP83867_PHY_ID_1,  .mode = "rgmii" }},
 		/* last entry */
-		{ .phy = { .if_name = NULL }},
+		{ .phy = { .addr = INVALID_ADDRESS }},
 	},
 };
 
@@ -208,14 +214,14 @@ machine_phyconfig_t machine_config_imx8qx = {
 	.phy_count = 2,
 	.phy_configs = {
 		/* symphony */
-		{ .phy = { .if_name = "eth0", .addr = 4, .id = ADIN1300_PHY_ID_1, .mode = "rgmii" }},
-		{ .phy = { .if_name = "eth1", .addr = 5, .id = ADIN1300_PHY_ID_1, .mode = "rgmii" }},
-		{ .phy = { .if_name = "eth1", .addr = 5, .id = MXL86110_PHY_ID_1, .mode = "rgmii" }},
-		{ .phy = { .if_name = "eth0", .addr = 4, .id = AR803x_PHY_ID_1,   .mode = "rgmii" }, .ar803_vddio = AT803X_VDDIO_1P8V },
-		{ .phy = { .if_name = "eth1", .addr = 5, .id = AR803x_PHY_ID_1,   .mode = "rgmii-rxid" }, .ar803_vddio = AT803X_VDDIO_1P8V },
-		{ .phy = { .if_name = "eth1", .addr = 5, .id = DP83867_PHY_ID_1, .mode = "rgmii" }},
+		{ .phy = { .addr = 4, .id = ADIN1300_PHY_ID_1, .mode = "rgmii" }},
+		{ .phy = { .addr = 5, .id = ADIN1300_PHY_ID_1, .mode = "rgmii" }},
+		{ .phy = { .addr = 5, .id = MXL86110_PHY_ID_1, .mode = "rgmii" }},
+		{ .phy = { .addr = 4, .id = AR803x_PHY_ID_1,   .mode = "rgmii" }, .ar803_vddio = AT803X_VDDIO_1P8V },
+		{ .phy = { .addr = 5, .id = AR803x_PHY_ID_1,   .mode = "rgmii-rxid" }, .ar803_vddio = AT803X_VDDIO_1P8V },
+		{ .phy = { .addr = 5, .id = DP83867_PHY_ID_1, .mode = "rgmii" }},
 		/* last entry */
-		{ .phy = { .if_name = NULL }},
+		{ .phy = { .addr = INVALID_ADDRESS }},
 	},
 };
 
@@ -223,19 +229,19 @@ machine_phyconfig_t machine_config_imx8qm = {
 	.phy_count = 2,
 	.phy_configs = {
 		/* sp8mcustomboard */
-		{ .phy = { .if_name = "eth0", .addr = 0, .id = ADIN1300_PHY_ID_1, .mode = "rgmii" }},
-		{ .phy = { .if_name = "eth1", .addr = 1, .id = ADIN1300_PHY_ID_1, .mode = "rgmii" }},
-		{ .phy = { .if_name = "eth0", .addr = 0, .id = AR803x_PHY_ID_1,   .mode = "rgmii" }, .ar803_vddio = AT803X_VDDIO_1P8V },
-		{ .phy = { .if_name = "eth1", .addr = 1, .id = AR803x_PHY_ID_1,   .mode = "rgmii" }, .ar803_vddio = AT803X_VDDIO_1P8V },
+		{ .phy = { .addr = 0, .id = ADIN1300_PHY_ID_1, .mode = "rgmii" }},
+		{ .phy = { .addr = 1, .id = ADIN1300_PHY_ID_1, .mode = "rgmii" }},
+		{ .phy = { .addr = 0, .id = AR803x_PHY_ID_1,   .mode = "rgmii" }, .ar803_vddio = AT803X_VDDIO_1P8V },
+		{ .phy = { .addr = 1, .id = AR803x_PHY_ID_1,   .mode = "rgmii" }, .ar803_vddio = AT803X_VDDIO_1P8V },
 		/* symphony */
-		{ .phy = { .if_name = "eth1", .addr = 5, .id = MXL86110_PHY_ID_1, .mode = "rgmii" }},
-		{ .phy = { .if_name = "eth0", .addr = 4, .id = ADIN1300_PHY_ID_1, .mode = "rgmii" }},
-		{ .phy = { .if_name = "eth1", .addr = 5, .id = ADIN1300_PHY_ID_1, .mode = "rgmii" }},
-		{ .phy = { .if_name = "eth0", .addr = 4, .id = AR803x_PHY_ID_1,   .mode = "rgmii" }, .ar803_vddio = AT803X_VDDIO_1P8V },
-		{ .phy = { .if_name = "eth1", .addr = 5, .id = AR803x_PHY_ID_1,   .mode = "rgmii-rxid" }, .ar803_vddio = AT803X_VDDIO_1P8V },
-		{ .phy = { .if_name = "eth1", .addr = 5, .id = DP83867_PHY_ID_1, .mode = "rgmii" }},
+		{ .phy = { .addr = 5, .id = MXL86110_PHY_ID_1, .mode = "rgmii" }},
+		{ .phy = { .addr = 4, .id = ADIN1300_PHY_ID_1, .mode = "rgmii" }},
+		{ .phy = { .addr = 5, .id = ADIN1300_PHY_ID_1, .mode = "rgmii" }},
+		{ .phy = { .addr = 4, .id = AR803x_PHY_ID_1,   .mode = "rgmii" }, .ar803_vddio = AT803X_VDDIO_1P8V },
+		{ .phy = { .addr = 5, .id = AR803x_PHY_ID_1,   .mode = "rgmii-rxid" }, .ar803_vddio = AT803X_VDDIO_1P8V },
+		{ .phy = { .addr = 5, .id = DP83867_PHY_ID_1, .mode = "rgmii" }},
 		/* last entry */
-		{ .phy = { .if_name = NULL }},
+		{ .phy = { .addr = INVALID_ADDRESS }},
 	},
 };
 
@@ -243,10 +249,10 @@ machine_phyconfig_t machine_config_imx6ul = {
 	.phy_count = 2,
 	.phy_configs = {
 		/* concerto */
-		{ .phy = { .if_name = "eth0", .addr = 1, .id = KSZ9031_PHY_ID_1, .mode = "rmii-ref" }},
-		{ .phy = { .if_name = "eth1", .addr = 3, .id = KSZ9031_PHY_ID_1, .mode = "rmii-ref" }},
+		{ .phy = { .addr = 1, .id = KSZ9031_PHY_ID_1, .mode = "rmii-ref" }},
+		{ .phy = { .addr = 3, .id = KSZ9031_PHY_ID_1, .mode = "rmii-ref" }},
 		/* last entry */
-		{ .phy = { .if_name = NULL }},
+		{ .phy = { .addr = INVALID_ADDRESS }},
 	},
 };
 
@@ -367,7 +373,7 @@ static machine_phyconfig_t * get_machine_phyconfig() {
 		/* VAR-SOM-6UL on SymphonyBoard don't support on-board phy */
 		if (strstr(machine, "Symphony") || strstr(machine, "symphony")) {
 			machine_config_imx6ul.phy_count = 1;
-			machine_config_imx6ul.phy_configs[1].phy.if_name = NULL;
+			machine_config_imx6ul.phy_configs[1].phy.addr = INVALID_ADDRESS;
 		}
 		machine_phyconfig = &machine_config_imx6ul;
 	} else if (strstr(soc, "i.MX6") && !strstr(soc, "i.MX6ULZ"))
@@ -411,6 +417,89 @@ static machine_phyconfig_t * get_machine_phyconfig() {
 	return machine_phyconfig;
 }
 
+static int str_ends(const char *str, const char *suffix)
+{
+	size_t str_len = strlen(str);
+	size_t suffix_len = strlen(suffix);
+
+	return str_len >= suffix_len && strcmp(str + str_len - suffix_len, suffix) == 0;
+}
+
+/**
+ * Resolve the network interface name for a given MDIO address.
+ *
+ * Supported Variscite configurations use a single MDIO bus,
+ * therefore the PHY address uniquely identifies the interface.
+ */
+static int phy_linux_resolve(uint8_t addr, char if_name[IFNAMSIZ]) {
+	const char *class_net_dir = "/sys/class/net";
+
+	struct dirent *entry;
+	char path[PATH_MAX] = { 0 };
+	char resolved [PATH_MAX] = { 0 };
+	char found [IFNAMSIZ] = { 0 };
+	char addr_suffix[4];
+	DIR *dir;
+	int ret = -1;
+
+	snprintf(addr_suffix, sizeof(addr_suffix), ":%02x", addr);
+
+	/* Iterate over all network interfaces in /sys/class/net and check the phy_dev */
+	dir = opendir(class_net_dir);
+	if (!dir) {
+		fprintf(stderr, "%s: %s\n", class_net_dir, strerror(errno));
+		return -1;
+	}
+	while ((entry = readdir(dir))) {
+		if ((entry->d_name[0] == '.') || (strlen(entry->d_name) >= IFNAMSIZ))
+			continue;
+
+		snprintf(path, sizeof(path), "%s/%s/phydev", class_net_dir, entry->d_name);
+
+		/* interfaces backed by phylib expose phydev, and these are the only ones we care about */
+		if (!realpath(path, resolved))
+			continue;
+
+		if (str_ends(resolved, addr_suffix)) {
+			strcpy(found, entry->d_name);
+			break;
+		}
+	}
+	if (!found[0]) {
+		DEBUG_PRINT("%s: no network interface found for addr %d\n", __func__, addr);
+		goto out;
+	}
+	strcpy(if_name, found);
+	ret = 0;
+out:
+	closedir(dir);
+
+	return ret;
+}
+
+static int var_resolve_interfaces() {
+	int i;
+	machine_phyconfig_t * machine_config = get_machine_phyconfig();
+
+	if (machine_config == NULL)
+		return RET_UNKNOWN_PHY;
+
+	for (i = 0; machine_config->phy_configs[i].phy.addr != INVALID_ADDRESS; i++) {
+		phyconfig_t *config = &machine_config->phy_configs[i];
+
+		/* The serial MII interface (U-Boot) doesn't use Linux interface names */
+		if (serial_active()) {
+			config->phy.if_name = "U-Boot"; /* add a dummy name so interface won't be skipped */
+			continue;
+		}
+
+		if (!phy_linux_resolve(config->phy.addr, config->if_name)) {
+			config->phy.if_name = config->if_name;
+		}
+	}
+	return 0;
+}
+
 static int var_probe_phy_ids() {
 	int i = 0;
 	machine_phyconfig_t * machine_config = get_machine_phyconfig();
@@ -418,9 +507,13 @@ static int var_probe_phy_ids() {
 	if (machine_config == NULL)
 		return RET_UNKNOWN_PHY;
 
-	for (i = 0; machine_config->phy_configs[i].phy.if_name != NULL; i++) {
+	for (i = 0; machine_config->phy_configs[i].phy.addr != INVALID_ADDRESS; i++) {
 		__u16 phy_val = 0xffff;
 		phyconfig_t * phy_config = &machine_config->phy_configs[i];
+
+		/* Check if the interface exists for that config */
+		if (!phy_config->phy.if_name)
+			continue;
 
 		/* Read the phy id */
 		if (mii_read_reg(&phy_config->phy, MII_PHYSID1, &phy_val))
@@ -440,7 +533,7 @@ static int var_init_phy_extended_registers() {
 	if (machine_config == NULL)
 		return RET_UNKNOWN_PHY;
 
-	for (i = 0; machine_config->phy_configs[i].phy.if_name != NULL; i++) {
+	for (i = 0; machine_config->phy_configs[i].phy.addr != INVALID_ADDRESS; i++) {
 		phyconfig_t * phy_config = &machine_config->phy_configs[i];
 
 		switch(phy_config->phy.id) {
@@ -477,6 +570,8 @@ static int var_init_phy_extended_registers() {
 }
 
 static int var_init_phys() {
+	var_resolve_interfaces();
+
 	if (var_init_phy_extended_registers()) {
 		printf("Failed to intialize extended registers\n");
 		return RET_ERROR;
@@ -498,8 +593,12 @@ static phyconfig_t * get_phy_config(const char * if_name, uint8_t addr) {
 	if (machine_config == NULL)
 		return NULL;
 
-	for (i = 0; machine_config->phy_configs[i].phy.if_name != NULL; i++) {
+	for (i = 0; machine_config->phy_configs[i].phy.addr != INVALID_ADDRESS; i++) {
 		phyconfig_t * phy_config = &machine_config->phy_configs[i];
+
+		/* Check if the interface exists for that config */
+		if (!phy_config->phy.if_name)
+			continue;
 
 		/* Check if phy id matches */
 		if (phy_config->phy.id_actual != phy_config->phy.id)
@@ -528,8 +627,12 @@ static int var_verify_phys() {
 		return RET_ERROR;
 	}
 
-	for (i = 0; machine_config->phy_configs[i].phy.if_name != NULL; i++) {
+	for (i = 0; machine_config->phy_configs[i].phy.addr != INVALID_ADDRESS; i++) {
 		const phyconfig_t phy_config = machine_config->phy_configs[i];
+
+		/* Check if the interface exists for that config */
+		if (!phy_config.phy.if_name)
+			continue;
 
 		/* Check if phy id matches */
 		if (phy_config.phy.id_actual != phy_config.phy.id) {
